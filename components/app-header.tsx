@@ -1,6 +1,6 @@
 'use client'
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { Search, Bell, Check, Store, ChevronsUpDown } from 'lucide-react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -37,6 +37,20 @@ export function AppHeader({ title }: { title: string }) {
   const [cmdOpen, setCmdOpen] = useState(false)
   const [branch, setBranch] = useState(branches[0])
   const unreadCount = notifications.filter((n) => n.unread).length
+
+  const [userEmail, setUserEmail] = useState('')
+
+useEffect(() => {
+  const loadUser = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    setUserEmail(user?.email || '')
+  }
+
+  loadUser()
+}, [])
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-xl md:px-5">
@@ -147,18 +161,22 @@ export function AppHeader({ title }: { title: string }) {
               </AvatarFallback>
             </Avatar>
             <div className="hidden text-left leading-tight md:block">
-              <p className="text-sm font-medium">Nguyễn Văn An</p>
+              <p className="text-sm font-medium">
+  {userEmail.split('@')[0] || 'User'}
+</p>
             </div>
             <Badge
               variant="outline"
               className="hidden border-primary/30 bg-primary/10 text-primary md:inline-flex"
             >
-              Chủ DN
+               {userEmail}
             </Badge>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
-              <p className="font-medium">Nguyễn Văn An</p>
+              <p className="font-medium">
+  {userEmail.split('@')[0] || 'User'}
+</p>
               <p className="text-xs font-normal text-muted-foreground">
                 an.nguyen@novavi.vn
               </p>
