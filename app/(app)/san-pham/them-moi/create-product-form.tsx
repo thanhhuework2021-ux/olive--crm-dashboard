@@ -199,7 +199,7 @@ export default function CreateProductForm() {
 
       </div>
 
-      <div className="mt-6 flex justify-end gap-3">
+      <div className="col-span-full flex justify-center py-4">
         <button
           type="button"
           onClick={() => router.push('/san-pham')}

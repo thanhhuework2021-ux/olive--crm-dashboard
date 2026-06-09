@@ -101,7 +101,7 @@ const [customerAddress, setCustomerAddress] =
 const displayedProducts =
   showAllProducts
     ? filteredProducts
-    : filteredProducts.slice(0, 6)
+    : filteredProducts.slice(0, 8)
 
 const loadData = async () => {
   const { data: products } = await supabase
@@ -337,9 +337,7 @@ setShowPrint(true)
     <div className="grid gap-6 lg:grid-cols-12">
 
   {/* LEFT */}
-
-  {/* LEFT */}
-<div className="lg:col-span-7">
+<div className="lg:col-span-9">
 
     <div className="mb-4">
 
@@ -352,26 +350,71 @@ setShowPrint(true)
   />
 </div>
 
-<div className="mb-4 flex items-center gap-2">
+<div className="mb-4 flex items-center justify-between">
+
   <span className="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-300">
     {productsData.length} sản phẩm
   </span>
 
-  <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-sm text-cyan-400">
-    Hiển thị {filteredProducts.length}
-  </span>
+  {filteredProducts.length > 8 && (
+
+    <button
+      onClick={() =>
+        setShowAllProducts(!showAllProducts)
+      }
+      className="
+      rounded-lg
+      border
+      border-slate-700
+      px-4
+      py-2
+      text-sm
+      hover:border-cyan-500
+      "
+    >
+      {showAllProducts
+        ? 'Thu gọn'
+        : 'Xem thêm'}
+    </button>
+
+  )}
+
 </div>
 
     </div>
 
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 
       {displayedProducts.map((item) => (
 
         <div
           key={item.id}
-          className="rounded-xl border border-slate-800 p-4"
+          className="
+group
+rounded-2xl
+border
+border-slate-800
+bg-slate-900/50
+p-2
+transition-all
+hover:border-cyan-500
+hover:shadow-xl
+hover:shadow-cyan-500/10
+"
         >
+
+          <img
+  src={item.image_url}
+  alt={item.name}
+  className="
+    mb-3
+    h-28
+    w-full
+    rounded-xl
+    object-cover
+    bg-slate-800
+  "
+/>
 
           <div className="font-semibold">
             {item.name}
@@ -382,8 +425,27 @@ setShowPrint(true)
           </div>
 
           <div className="mt-2">
-            Tồn: {item.stock_quantity}
-          </div>
+
+  {item.stock_quantity > 10 && (
+    <span className="rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-400">
+      Còn {item.stock_quantity}
+    </span>
+  )}
+
+  {item.stock_quantity > 0 &&
+   item.stock_quantity <= 10 && (
+    <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-xs text-yellow-400">
+      Còn {item.stock_quantity}
+    </span>
+  )}
+
+  {item.stock_quantity === 0 && (
+    <span className="rounded-full bg-red-500/20 px-2 py-1 text-xs text-red-400">
+      Hết hàng
+    </span>
+  )}
+
+</div>
 
           <div className="mt-1 text-cyan-400 font-semibold">
             {Number(item.sale_price).toLocaleString('vi-VN')} đ
@@ -402,23 +464,6 @@ setShowPrint(true)
 
       <div className="mt-4 flex justify-center">
 
-  {filteredProducts.length > 6 && (
-
-    <button
-      onClick={() =>
-        setShowAllProducts(
-          !showAllProducts
-        )
-      }
-      className="rounded-lg border border-slate-700 px-4 py-2"
-    >
-      {showAllProducts
-        ? 'Thu gọn'
-        : 'Xem thêm'}
-    </button>
-
-  )}
-
 </div>
 
     </div>
@@ -429,12 +474,15 @@ setShowPrint(true)
 
   {/* RIGHT */}
 
-  <div className="lg:col-span-5">
+  <div className="lg:col-span-3">
 
-    <div className="sticky top-4 rounded-xl border border-slate-800 p-4">
+    <div className="sticky top-4 h-[calc(100vh-100px)]
+overflow-auto space-y-4">
 
-      <h2 className="mb-4 text-lg font-bold">
-        Khách hàng
+      
+
+      <h2 className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+        Thông Tin Khách hàng
       </h2>
 
       <input
@@ -463,10 +511,6 @@ setShowPrint(true)
         }
         className="mb-6 w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
       />
-
-      <h2 className="mb-3 text-lg font-bold">
-        Giỏ hàng
-      </h2>
 
       <div className="mt-4">
 
