@@ -30,9 +30,6 @@ import {
 import { kpis } from '@/lib/data'
 import { formatVND, formatNumber } from '@/lib/format'
 
-export default function Home() {
-  return <div>CRM Dashboard Loading...</div>
-}
 
 export default function DashboardPage() {
   return (
