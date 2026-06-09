@@ -75,11 +75,11 @@ export function AppSidebar() {
 
             return (
               <Collapsible
-                key={item.url}
-                render={<SidebarMenuItem />}
-                defaultOpen={isParentActive(item)}
-                className="group/collapsible"
-              >
+  key={item.url}
+  render={<SidebarMenuItem />}
+  open={isParentActive(item)}
+  className="group/collapsible"
+>
                 <CollapsibleTrigger
                   render={
                     <SidebarMenuButton

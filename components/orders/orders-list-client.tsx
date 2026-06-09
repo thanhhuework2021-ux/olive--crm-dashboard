@@ -1,5 +1,5 @@
 'use client'
-
+import { Switch } from '@/components/ui/switch'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Plus, Search, Filter, Download } from 'lucide-react'
@@ -65,7 +65,13 @@ const loadOrders = async () => {
   const { data, error } =
     await supabase
       .from('orders')
-      .select('*')
+.select(`
+  *,
+  customers (
+    full_name,
+    phone
+  )
+`)
       .order(
         'created_at',
         { ascending: false }
@@ -75,24 +81,26 @@ const loadOrders = async () => {
     console.log(error)
     return
   }
+console.log(data?.[0])
 
   setOrders(data || [])
 }
 
   const filtered = useMemo(() => {
-    return orders.filter((o) => {
-      if (status !== 'all' && o.status !== status) return false
-      if (branch !== 'all' && o.branch !== branch) return false
-      if (staff !== 'all' && o.staff !== staff) return false
-      if (
-        query &&
-        !o.code.toLowerCase().includes(query.toLowerCase()) &&
-        !o.customerName.toLowerCase().includes(query.toLowerCase())
-      )
-        return false
-      return true
-    })
-  }, [query, status, branch, staff])
+  return orders.filter((o) => {
+    if (status !== 'all' && o.status !== status) return false
+
+    if (
+      query &&
+      !String(o.order_code || '')
+        .toLowerCase()
+        .includes(query.toLowerCase())
+    )
+      return false
+
+    return true
+  })
+}, [orders, query, status])
 
   const openOrder = (o: Order) => {
     setSelected(o)
@@ -199,35 +207,59 @@ const loadOrders = async () => {
                 {filtered.map((o) => (
                   <TableRow
                     key={o.id}
-                    onClick={() => openOrder(o)}
+                    onClick={() => {}}
                     className="cursor-pointer"
                   >
                     <TableCell className="font-mono text-sm font-medium text-primary">
                       {o.order_code}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="size-8">
-                          <AvatarFallback className="bg-muted text-xs">
-                            {o.customerName.slice(0, 1)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">
-                            {o.customer_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {o.customer_phone}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
+                    
+                     <TableCell>
+  <div className="flex items-center gap-2.5">
+    <Avatar className="size-8">
+      <AvatarFallback className="bg-muted text-xs">
+        {(o.customers?.full_name || 'K')
+          .charAt(0)
+          .toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+
+    <div>
+      <p className="font-medium">
+        {o.customers?.full_name || 'Khách lẻ'}
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        {o.customers?.phone || ''}
+      </p>
+    </div>
+  </div>
+</TableCell>
+
                     <TableCell className="text-right font-semibold">
                       {formatVND(o.total_amount)}
                     </TableCell>
-                    <TableCell>
-                      <PaymentStatusBadge status={o.paymentStatus} />
-                    </TableCell>
+                    
+                      <TableCell>
+  <Switch
+    checked={o.payment_status === 'paid'}
+    onCheckedChange={async (checked) => {
+      const newStatus = checked ? 'paid' : 'unpaid'
+
+      await supabase
+        .from('orders')
+        .update({
+          payment_status: newStatus,
+          status: checked
+            ? 'confirmed'
+            : 'pending',
+        })
+        .eq('id', o.id)
+
+      loadOrders()
+    }}
+  />
+</TableCell>
                     <TableCell>
                       <OrderStatusBadge status={o.status} />
                     </TableCell>
@@ -259,7 +291,11 @@ const loadOrders = async () => {
         </Card>
       </FadeIn>
 
-      <OrderDetailSheet order={selected} open={open} onOpenChange={setOpen} />
+      {/* <OrderDetailSheet
+  order={selected}
+  open={open}
+  onOpenChange={setOpen}
+/> */}
     </PageShell>
   )
 }
