@@ -101,7 +101,7 @@ export default function DashboardPage() {
           <RecentOrdersWidget />
         </FadeIn>
       </div>
-
+<h1 style={{color:'red'}}>VERSION TEST 0906</h1>
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <FadeIn delay={0.3}>
           <TopProductsWidget />
