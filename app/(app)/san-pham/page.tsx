@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+export const dynamic = 'force-dynamic'
 import ProductsTable from '@/components/products/products-table'
 
 export default async function ProductsPage() {
