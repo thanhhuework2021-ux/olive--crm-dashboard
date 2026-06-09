@@ -1,6 +1,6 @@
-import { CreateOrderClient }
-from '@/components/orders/create-order-client'
+import { CreateOrderSupabase }
+from '@/components/orders/create-order-supabase'
 
 export default function CreateOrderPage() {
-  return <CreateOrderClient />
+  return <CreateOrderSupabase />
 }

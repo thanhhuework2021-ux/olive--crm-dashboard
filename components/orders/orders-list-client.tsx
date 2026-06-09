@@ -70,6 +70,9 @@ const loadOrders = async () => {
   customers (
     full_name,
     phone
+  ),
+  order_items (
+    *
   )
 `)
       .order(
@@ -117,9 +120,14 @@ console.log(data?.[0])
             <Button variant="outline">
               <Download data-icon="inline-start" /> Xuất Excel
             </Button>
-            <Button render={<Link href="/don-hang/tao-moi" />}>
-              <Plus data-icon="inline-start" /> Tạo đơn hàng
-            </Button>
+            
+            <Link href="/don-hang/tao-moi">
+  <Button>
+    <Plus data-icon="inline-start" />
+    Tạo đơn hàng
+  </Button>
+</Link>
+
           </>
         }
       />
@@ -205,11 +213,11 @@ console.log(data?.[0])
               </TableHeader>
               <TableBody>
                 {filtered.map((o) => (
-                  <TableRow
-                    key={o.id}
-                    onClick={() => {}}
-                    className="cursor-pointer"
-                  >
+  <TableRow
+    key={o.id}
+    onClick={() => openOrder(o)}
+    className="cursor-pointer"
+  >
                     <TableCell className="font-mono text-sm font-medium text-primary">
                       {o.order_code}
                     </TableCell>
@@ -291,11 +299,11 @@ console.log(data?.[0])
         </Card>
       </FadeIn>
 
-      {/* <OrderDetailSheet
+      {<OrderDetailSheet
   order={selected}
   open={open}
   onOpenChange={setOpen}
-/> */}
+/>}
     </PageShell>
   )
 }

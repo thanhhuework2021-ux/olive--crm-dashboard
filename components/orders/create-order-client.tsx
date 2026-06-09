@@ -268,10 +268,12 @@ if (!existingCustomer) {
     ])
 }
 
-  const { error } =
-  await supabase
-    .from('orders')
-    .insert([
+  const {
+  data: orderData,
+  error,
+} = await supabase
+  .from('orders')
+  .insert([
       {
         order_code: orderCode,
 
@@ -291,12 +293,35 @@ if (!existingCustomer) {
       },
     ])
 
+    .select()
+.single()
+
 if (error) {
   console.log(error)
   alert(error.message)
   toast.error(error.message)
   return
 }
+
+const { error: itemError } =
+  await supabase
+    .from('order_items')
+    .insert(
+      cart.map((item) => ({
+        order_id: orderData.id,
+        product_id: item.product.id,
+        sku: item.product.sku,
+        product_name: item.product.name,
+        quantity: item.quantity,
+        sale_price: item.price,
+        subtotal:
+          item.price * item.quantity,
+      }))
+    )
+
+console.log('itemError', itemError)
+console.log('orderData', orderData)
+console.log('cart', cart)
 
 toast.success(
   'Tạo đơn hàng thành công'

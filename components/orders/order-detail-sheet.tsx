@@ -59,7 +59,9 @@ export function OrderDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 p-0 sm:max-w-xl">
+      <SheetContent
+  className="w-full p-0 sm:max-w-2xl"
+>
         <SheetHeader className="border-b border-border">
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -70,144 +72,119 @@ export function OrderDetailSheet({
                 Tạo lúc {formatDateTime(order.createdAt)}
               </SheetDescription>
             </div>
-            <OrderStatusBadge status={order.status} />
           </div>
         </SheetHeader>
 
-        <Tabs defaultValue="info" className="flex min-h-0 flex-1 flex-col">
-          <TabsList className="mx-4 mt-3 grid w-auto grid-cols-4">
-            <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="items">Sản phẩm</TabsTrigger>
-            <TabsTrigger value="payment">Thanh toán</TabsTrigger>
-            <TabsTrigger value="history">Lịch sử</TabsTrigger>
-          </TabsList>
+<div className="p-8">
 
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="p-4">
-              <TabsContent value="info" className="mt-0 flex flex-col gap-4">
-                <div className="rounded-xl border border-border p-4">
-                  <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                    <User className="size-4 text-primary" /> Khách hàng
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-10">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {order.customerName.slice(0, 1)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{order.customerName}</p>
-                      <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Phone className="size-3" /> {order.customerPhone}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+  {/* KHÁCH HÀNG */}
+  <div className="mb-8">
 
-                <div className="rounded-xl border border-border p-4">
-                  <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                    <Truck className="size-4 text-primary" /> Giao hàng
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    <Row label="Đơn vị vận chuyển" value={order.shippingCarrier ?? '—'} />
-                    <Row label="Mã vận đơn" value={order.trackingCode ?? '—'} />
-                    <div className="flex items-start gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="mt-0.5 size-3.5 shrink-0" />
-                      <span>{order.shippingAddress}</span>
-                    </div>
-                  </div>
-                </div>
+    <p className="text-xs uppercase tracking-widest text-slate-500">
+      Khách hàng
+    </p>
 
-                <div className="rounded-xl border border-border p-4">
-                  <p className="mb-3 text-sm font-semibold">Thông tin khác</p>
-                  <div className="flex flex-col gap-2">
-                    <Row label="Chi nhánh" value={order.branch} />
-                    <Row label="Người tạo" value={order.staff} />
-                    {order.note && (
-                      <div className="mt-1 rounded-lg bg-muted/50 p-2.5 text-sm text-muted-foreground">
-                        {order.note}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
+    <h2 className="mt-2 text-3xl font-bold">
+      {order.customers?.full_name || 'Khách lẻ'}
+    </h2>
 
-              <TabsContent value="items" className="mt-0 flex flex-col gap-2">
-                {order.items.map((it) => (
-                  <div
-                    key={it.productId}
-                    className="flex items-center gap-3 rounded-xl border border-border p-3"
-                  >
-                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={it.image} alt={it.name} className="size-full object-cover" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{it.name}</p>
-                      <p className="font-mono text-xs text-muted-foreground">{it.sku}</p>
-                    </div>
-                    <div className="text-right text-sm">
-                      <p className="text-muted-foreground">
-                        {it.quantity} × {formatVND(it.price)}
-                      </p>
-                      <p className="font-semibold">
-                        {formatVND(it.price * it.quantity)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
+    <p className="mt-1 text-slate-400">
+      {order.customers?.phone}
+    </p>
 
-              <TabsContent value="payment" className="mt-0">
-                <div className="rounded-xl border border-border p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Trạng thái thanh toán</span>
-                    <PaymentStatusBadge status={order.paymentStatus} />
-                  </div>
-                  <Separator className="mb-3" />
-                  <div className="flex flex-col gap-2.5">
-                    <Row label="Tạm tính" value={formatVND(order.subtotal)} />
-                    <Row label="Giảm giá" value={`- ${formatVND(order.discount)}`} />
-                    <Row label="VAT (8%)" value={formatVND(order.vat)} />
-                    <Row label="Phí vận chuyển" value={formatVND(order.shippingFee)} />
-                    <Separator />
-                    <Row label="Tổng thanh toán" value={formatVND(order.total)} strong />
-                    <Row label="Đã thanh toán" value={formatVND(order.paid)} />
-                    <Row label="Còn lại" value={formatVND(order.total - order.paid)} />
-                    <Separator />
-                    <Row
-                      label="Phương thức"
-                      value={PAYMENT_METHOD_LABELS[order.paymentMethod]}
-                    />
-                  </div>
-                </div>
-              </TabsContent>
+  </div>
 
-              <TabsContent value="history" className="mt-0">
-                <div className="relative flex flex-col gap-0 pl-2">
-                  {order.history.map((e, i) => (
-                    <div key={e.id} className="relative flex gap-3 pb-5 last:pb-0">
-                      <div className="flex flex-col items-center">
-                        <div className="z-10 flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary">
-                          <Clock className="size-3.5" />
-                        </div>
-                        {i < order.history.length - 1 && (
-                          <div className="absolute top-7 h-full w-px bg-border" />
-                        )}
-                      </div>
-                      <div className="pt-0.5">
-                        <p className="text-sm font-medium">{e.action}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {e.staff} · {formatDateTime(e.time)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </div>
-          </ScrollArea>
-        </Tabs>
+  <div className="h-px bg-slate-800 mb-8" />
+
+  {/* SẢN PHẨM */}
+  <div className="mb-8">
+
+    <p className="mb-3 text-xs uppercase tracking-widest text-slate-500">
+      Sản phẩm
+    </p>
+
+    {order.order_items?.map((item: any) => (
+
+      <div
+        key={item.id}
+        className="flex items-start justify-between py-4"
+      >
+
+        <div>
+
+          <p className="text-sm font-medium">
+  {item.product_name}
+</p>
+
+          <p className="mt-1 text-sm text-slate-500">
+            {item.quantity} × {Number(item.sale_price).toLocaleString('vi-VN')}đ
+          </p>
+
+        </div>
+
+        <div className="text-right">
+
+          <p className="text-lg font-semibold">
+            {Number(item.subtotal).toLocaleString('vi-VN')}đ
+          </p>
+
+        </div>
+
+      </div>
+
+    ))}
+
+  </div>
+
+  <div className="h-px bg-slate-800 mb-8" />
+
+  {/* THANH TOÁN */}
+  <div className="space-y-3">
+
+    <div className="flex justify-between text-slate-400">
+      <span>Tạm tính</span>
+      <span>
+        {Number(order.subtotal).toLocaleString('vi-VN')}đ
+      </span>
+    </div>
+
+    <div className="flex justify-between text-slate-400">
+      <span>Giảm giá</span>
+      <span>
+        {Number(order.discount).toLocaleString('vi-VN')}đ
+      </span>
+    </div>
+
+    <div className="flex justify-between text-slate-400">
+      <span>Vận chuyển</span>
+      <span>
+        {Number(order.shipping_fee).toLocaleString('vi-VN')}đ
+      </span>
+    </div>
+
+    <div className="my-4 h-px bg-slate-800" />
+
+    <div className="flex items-end justify-between">
+
+     <div>
+
+  <p className="text-xs uppercase tracking-widest text-slate-500">
+    Tổng cộng
+  </p>
+
+  <p className="mt-2 text-2xl font-bold">
+    {Number(order.total_amount).toLocaleString('vi-VN')}đ
+  </p>
+
+</div>
+
+      <OrderStatusBadge status={order.status} />
+
+    </div>
+
+</div>
+
+</div>
 
         <div className="flex gap-2 border-t border-border p-4">
           <Button variant="outline" className="flex-1">
