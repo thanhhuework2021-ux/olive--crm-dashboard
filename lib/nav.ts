@@ -24,12 +24,13 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
+  /*
   {
     title: 'Tổng quan',
     url: '/',
     icon: LayoutDashboard,
   },
-
+*/
   {
     title: 'Đơn hàng',
     url: '/don-hang',
@@ -60,11 +61,11 @@ export const navItems: NavItem[] = [
     icon: Package,
   },
 
-  {
-    title: 'Nhà cung cấp',
-    url: '/nha-cung-cap',
-    icon: Building2,
-  },
+  //{
+    //title: 'Nhà cung cấp',
+   // url: '/nha-cung-cap',
+    //icon: Building2,
+ // },
 
   {
   title: 'Kho hàng',
@@ -79,29 +80,31 @@ export const navItems: NavItem[] = [
       title: 'Nhập kho',
       url: '/kho-hang/nhap-kho',
     },
+    /*
     {
       title: 'Xuất kho',
       url: '/kho-hang/xuat-kho',
     },
+    */
     {
       title: 'Lịch sử kho',
       url: '/kho-hang/lich-su',
     },
   ],
 },
-
+/*
 {
   title: 'Công nợ',
   url: '/cong-no',
   icon: Wallet,
 },
-
-  {
+*/
+ /* {
     title: 'Báo cáo',
     url: '/bao-cao',
     icon: BarChart3,
   },
-
+*/
   {
     title: 'Cài đặt',
     url: '/cai-dat',

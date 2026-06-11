@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase'
+
 import {
   Package,
   AlertTriangle,
@@ -16,48 +18,33 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-const inventory = [
-  {
-    sku: "SP001",
-    name: "Đèn Mushroom Olive Living",
-    category: "Đèn bàn",
-    stock: 120,
-    cost: 350000,
-    price: 590000,
-  },
-  {
-    sku: "SP002",
-    name: "Đèn Glass Ball",
-    category: "Đèn trang trí",
-    stock: 25,
-    cost: 450000,
-    price: 790000,
-  },
-  {
-    sku: "SP003",
-    name: "Đèn LED Dây 5m",
-    category: "Phụ kiện",
-    stock: 5,
-    cost: 85000,
-    price: 150000,
-  },
-]
+export const dynamic = 'force-dynamic'
 
-export default function InventoryPage() {
-  const totalSku = inventory.length
+export default async function InventoryPage() {
 
-  const totalStock = inventory.reduce(
-    (acc, item) => acc + item.stock,
+  const { data: inventory } =
+    await supabase
+      .from('products')
+      .select('*')
+      .order('sku')
+
+  const totalSku = inventory?.length || 0
+
+  const totalStock = (inventory || []).reduce(
+    (acc, item) => acc + (item.stock_quantity || 0),
     0
   )
 
-  const totalValue = inventory.reduce(
-    (acc, item) => acc + item.stock * item.cost,
+  const totalValue = (inventory || []).reduce(
+    (acc, item) =>
+      acc +
+      (item.stock_quantity || 0) *
+      (item.cost_price || 0),
     0
   )
 
-  const lowStock = inventory.filter(
-    (item) => item.stock < 10
+  const lowStock = (inventory || []).filter(
+    (item) => (item.stock_quantity || 0) < 10
   ).length
 
   return (
@@ -184,19 +171,20 @@ export default function InventoryPage() {
                   </TableCell>
 
                   <TableCell>
-                    {item.stock}
+                    {item.stock_quantity}
                   </TableCell>
 
                   <TableCell>
-                    {item.cost.toLocaleString("vi-VN")} đ
+                    {(item.cost_price || 0).toLocaleString("vi-VN")} đ
                   </TableCell>
 
                   <TableCell>
-                    {item.price.toLocaleString("vi-VN")} đ
+                    {(item.sale_price || 0).toLocaleString("vi-VN")} đ
                   </TableCell>
 
                   <TableCell>
-                    {(item.stock * item.cost).toLocaleString("vi-VN")} đ
+                    {(item.stock_quantity || 0) *
+(item.cost_price || 0).toLocaleString("vi-VN")} đ
                   </TableCell>
 
                 </TableRow>
