@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 
+import CategoryFilter from '@/components/kho-hang/category-filter'
 import {
   Package,
   AlertTriangle,
@@ -20,13 +21,70 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export default async function InventoryPage() {
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string
+    category?: string
+  }>
+}) {
 
-  const { data: inventory } =
-    await supabase
-      .from('products')
-      .select('*')
-      .order('sku')
+  const params =
+  await searchParams
+
+const currentPage =
+  Number(params.page || 1)
+
+const category =
+  params.category || 'all'
+
+const pageSize = 10
+
+  
+
+  const {
+  count,
+} = await supabase
+  .from('products')
+  .select('*', {
+    count: 'exact',
+    head: true,
+  })
+
+const from =
+  (currentPage - 1) * pageSize
+
+const to =
+  from + pageSize - 1
+
+let query = supabase
+  .from('products')
+  .select('*')
+  .order('sku')
+
+if (category !== 'all') {
+  query = query.eq(
+    'category',
+    category
+  )
+}
+
+const { data: inventory } =
+  await query.range(from, to)
+
+  const totalPages =
+  Math.ceil(
+    (count || 0) /
+    pageSize
+  )
+
+  console.log(
+  'COUNT',
+  count,
+  'TOTAL PAGES',
+  totalPages
+)
 
   const totalSku = inventory?.length || 0
 
@@ -126,17 +184,10 @@ export default async function InventoryPage() {
 
           <div className="mb-6 flex items-center gap-3">
 
-            <div className="relative w-full max-w-md">
-
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-
-              <Input
-                placeholder="Tìm SKU hoặc sản phẩm..."
-                className="pl-10"
-              />
-
-            </div>
-
+<CategoryFilter
+  category={category}
+/>
+ 
           </div>
 
           <Table>
@@ -146,7 +197,8 @@ export default async function InventoryPage() {
               <TableRow>
                 <TableHead>SKU</TableHead>
                 <TableHead>Sản phẩm</TableHead>
-                <TableHead>Danh mục</TableHead>
+<TableHead>Màu sắc</TableHead>
+<TableHead>Danh mục</TableHead>
                 <TableHead>Tồn kho</TableHead>
                 <TableHead>Giá nhập</TableHead>
                 <TableHead>Giá bán</TableHead>
@@ -157,18 +209,48 @@ export default async function InventoryPage() {
 
             <TableBody>
 
-              {inventory.map((item) => (
+              {inventory?.map((item) => (
                 <TableRow key={item.sku}>
 
                   <TableCell>{item.sku}</TableCell>
 
                   <TableCell>
-                    {item.name}
-                  </TableCell>
+  {item.name}
+</TableCell>
 
-                  <TableCell>
-                    {item.category}
-                  </TableCell>
+<TableCell>
+
+  <div className="flex items-center gap-2">
+
+    <div
+      className="h-3 w-3 rounded-full"
+      style={{
+        background:
+          item.color?.toLowerCase() === 'red'
+            ? '#ef4444'
+            : item.color?.toLowerCase() === 'green'
+            ? '#22c55e'
+            : item.color?.toLowerCase() === 'black'
+            ? '#000'
+            : item.color?.toLowerCase() === 'white'
+            ? '#fff'
+            : item.color?.toLowerCase() === 'orange'
+            ? '#f97316'
+            : '#64748b',
+      }}
+    />
+
+    <span>
+      {item.color || '-'}
+    </span>
+
+  </div>
+
+</TableCell>
+
+<TableCell>
+  {item.category}
+</TableCell>
 
                   <TableCell>
                     {item.stock_quantity}
@@ -183,8 +265,10 @@ export default async function InventoryPage() {
                   </TableCell>
 
                   <TableCell>
-                    {(item.stock_quantity || 0) *
-(item.cost_price || 0).toLocaleString("vi-VN")} đ
+                    {(
+  (item.stock_quantity || 0) *
+  (item.cost_price || 0)
+).toLocaleString('vi-VN')} đ
                   </TableCell>
 
                 </TableRow>
@@ -193,6 +277,37 @@ export default async function InventoryPage() {
             </TableBody>
 
           </Table>
+
+    <div className="mt-6 flex justify-center gap-2">
+
+  {Array.from(
+    { length: totalPages },
+    (_, i) => (
+
+      <a
+        key={i}
+        href={`/kho-hang/ton-kho?page=${i + 1}`}
+        className={`
+          rounded-lg
+          border
+          px-4
+          py-2
+          font-semibold
+
+          ${
+            currentPage === i + 1
+              ? 'bg-cyan-500 text-black'
+              : 'bg-slate-900'
+          }
+        `}
+      >
+        {i + 1}
+      </a>
+
+    )
+  )}
+
+</div>
 
         </CardContent>
 
