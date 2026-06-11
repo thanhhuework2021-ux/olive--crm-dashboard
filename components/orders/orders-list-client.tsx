@@ -31,14 +31,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import {
   OrderStatusBadge,
-  PaymentStatusBadge,
 } from '@/components/status-badges'
 import { OrderDetailSheet } from '@/components/orders/order-detail-sheet'
 
 import {
   ORDER_STATUS_LABELS,
-  branches,
-  staffList,
   type OrderStatus,
 } from '@/lib/data'
 
@@ -49,8 +46,6 @@ import { formatVND, formatDateTime } from '@/lib/format'
 export function OrdersListClient() {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<string>('all')
-  const [branch, setBranch] = useState<string>('all')
-  const [staff, setStaff] = useState<string>('all')
   const [selected, setSelected] = useState<any>(null)
 
   const [orders, setOrders] =
@@ -144,54 +139,34 @@ console.log(data?.[0])
                 className="pl-9"
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[160px]">
-                  <Filter className="size-3.5 text-muted-foreground" />
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    {(Object.keys(ORDER_STATUS_LABELS) as OrderStatus[]).map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {ORDER_STATUS_LABELS[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Select value={branch} onValueChange={setBranch}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Chi nhánh" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">Tất cả chi nhánh</SelectItem>
-                    {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.name}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Select value={staff} onValueChange={setStaff}>
-                <SelectTrigger className="w-[170px]">
-                  <SelectValue placeholder="Nhân viên" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">Tất cả nhân viên</SelectItem>
-                    {staffList.slice(2).map((s) => (
-                      <SelectItem key={s.id} value={s.name}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex flex-wrap gap-2">
+  <Select value={status} onValueChange={setStatus}>
+    <SelectTrigger className="w-[160px]">
+      <Filter className="size-3.5 text-muted-foreground" />
+      <SelectValue placeholder="Trạng thái" />
+    </SelectTrigger>
+
+    <SelectContent>
+      <SelectGroup>
+        <SelectItem value="all">
+          Tất cả trạng thái
+        </SelectItem>
+
+        {(Object.keys(
+          ORDER_STATUS_LABELS
+        ) as OrderStatus[]).map((s) => (
+          <SelectItem
+            key={s}
+            value={s}
+          >
+            {ORDER_STATUS_LABELS[s]}
+          </SelectItem>
+        ))}
+      </SelectGroup>
+    </SelectContent>
+  </Select>
+</div>
+
           </CardContent>
         </Card>
       </FadeIn>
@@ -199,89 +174,117 @@ console.log(data?.[0])
       <FadeIn delay={0.05}>
         <Card className="overflow-hidden">
           <CardContent className="p-0">
+
             <Table>
+
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
+                <TableRow>
                   <TableHead>Mã đơn</TableHead>
                   <TableHead>Khách hàng</TableHead>
-                  <TableHead className="text-right">Tổng tiền</TableHead>
-                  <TableHead>Thanh toán</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
-                  <TableHead className="hidden lg:table-cell">Người tạo</TableHead>
+                  <TableHead className="text-right">
+                    Tổng tiền
+                  </TableHead>
+                  <TableHead>
+                    Thanh toán
+                  </TableHead>
+                  <TableHead>
+                    Trạng thái
+                  </TableHead>
+                  <TableHead>
+                    Ngày tạo
+                  </TableHead>
+                  <TableHead>
+                    Người tạo
+                  </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
+
                 {filtered.map((o) => (
-  <TableRow
-    key={o.id}
-    onClick={() => openOrder(o)}
-    className="cursor-pointer"
-  >
-                    <TableCell className="font-mono text-sm font-medium text-primary">
+
+                  <TableRow
+                    key={o.id}
+                    onClick={() =>
+                      openOrder(o)
+                    }
+                    className="cursor-pointer"
+                  >
+
+                    <TableCell className="font-mono">
                       {o.order_code}
                     </TableCell>
-                    
-                     <TableCell>
-  <div className="flex items-center gap-2.5">
-    <Avatar className="size-8">
-      <AvatarFallback className="bg-muted text-xs">
-        {(o.customers?.full_name || 'K')
-          .charAt(0)
-          .toUpperCase()}
-      </AvatarFallback>
-    </Avatar>
 
-    <div>
-      <p className="font-medium">
-        {o.customers?.full_name || 'Khách lẻ'}
-      </p>
-
-      <p className="text-xs text-muted-foreground">
-        {o.customers?.phone || ''}
-      </p>
-    </div>
-  </div>
-</TableCell>
+                    <TableCell>
+                      {o.customers?.full_name ||
+                        'Khách lẻ'}
+                    </TableCell>
 
                     <TableCell className="text-right font-semibold">
-                      {formatVND(o.total_amount)}
+                      {formatVND(
+                        o.total_amount
+                      )}
                     </TableCell>
-                    
-                      <TableCell>
-  <Switch
-    checked={o.payment_status === 'paid'}
-    onCheckedChange={async (checked) => {
-      const newStatus = checked ? 'paid' : 'unpaid'
 
-      await supabase
-        .from('orders')
-        .update({
-          payment_status: newStatus,
-          status: checked
-            ? 'confirmed'
-            : 'pending',
-        })
-        .eq('id', o.id)
+                    <TableCell
+                      onClick={(e) =>
+                        e.stopPropagation()
+                      }
+                    >
+                      <Switch
+                        checked={
+                          o.payment_status ===
+                          'paid'
+                        }
+                        onCheckedChange={async (
+                          checked
+                        ) => {
+                          const newStatus =
+                            checked
+                              ? 'paid'
+                              : 'unpaid'
 
-      loadOrders()
-    }}
-  />
-</TableCell>
+                          await supabase
+                            .from('orders')
+                            .update({
+                              payment_status:
+                                newStatus,
+                              status: checked
+                                ? 'completed'
+                                : 'pending',
+                            })
+                            .eq('id', o.id)
+
+                          loadOrders()
+                        }}
+                      />
+                    </TableCell>
+
                     <TableCell>
-                      <OrderStatusBadge status={o.status} />
+                      <OrderStatusBadge
+                        status={o.status}
+                      />
                     </TableCell>
-                    <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
-                      {formatDateTime(o.created_at)}
+
+                    <TableCell>
+                      {formatDateTime(
+                        o.created_at
+                      )}
                     </TableCell>
-                    <TableCell className="hidden text-sm lg:table-cell">
+
+                    <TableCell>
                       {o.staff}
                     </TableCell>
+
                   </TableRow>
+
                 ))}
+
               </TableBody>
+
             </Table>
 
+          
             {filtered.length === 0 && (
               <Empty className="py-16">
                 <EmptyHeader>

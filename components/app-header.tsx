@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Bell, Check, Store, ChevronsUpDown } from 'lucide-react'
+import { Search, Bell } from 'lucide-react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -16,13 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+
 import { CommandPalette } from '@/components/command-palette'
-import { branches } from '@/lib/data'
+//import { branches } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 const notifications = [
@@ -35,7 +31,7 @@ const notifications = [
 
 export function AppHeader({ title }: { title: string }) {
   const [cmdOpen, setCmdOpen] = useState(false)
-  const [branch, setBranch] = useState(branches[0])
+  
   const unreadCount = notifications.filter((n) => n.unread).length
 
   const [userEmail, setUserEmail] = useState('')
@@ -70,41 +66,7 @@ useEffect(() => {
       </button>
 
       <div className="flex items-center gap-1.5">
-        {/* Branch selector */}
-        <Popover>
-          <PopoverTrigger
-            render={<Button variant="outline" size="sm" />}
-            className="hidden gap-2 lg:flex"
-          >
-            <Store className="size-4 text-primary" />
-            <span className="max-w-32 truncate">{branch.name}</span>
-            <ChevronsUpDown className="size-3.5 text-muted-foreground" />
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 p-1.5">
-            <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-              Chọn chi nhánh
-            </p>
-            {branches.map((b) => (
-              <button
-                key={b.id}
-                onClick={() => setBranch(b)}
-                className={cn(
-                  'flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-accent',
-                  branch.id === b.id && 'bg-accent',
-                )}
-              >
-                <Store className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="flex-1">
-                  <p className="font-medium">{b.name}</p>
-                  <p className="text-xs text-muted-foreground">{b.address}</p>
-                </div>
-                {branch.id === b.id && (
-                  <Check className="mt-0.5 size-4 text-primary" />
-                )}
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
+        
 
         {/* Notifications */}
         <DropdownMenu>

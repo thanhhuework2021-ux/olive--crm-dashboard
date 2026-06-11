@@ -122,11 +122,11 @@ export interface DebtRecord {
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   draft: 'Nháp',
   pending: 'Chờ xác nhận',
-  confirmed: 'Đã xác nhận',
-  packing: 'Đang đóng gói',
-  shipping: 'Đang giao',
-  completed: 'Hoàn thành',
-  cancelled: 'Hủy',
+  confirmed: 'Đã hoàn thành',
+  //packing: 'Đang đóng gói',
+  //shipping: 'Đang giao',
+ // completed: 'Hoàn thành',
+ // cancelled: 'Hủy',
 }
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
@@ -160,19 +160,19 @@ export const PRODUCT_CATEGORIES = [
 
 // ============ DATA ============
 
-export const branches: Branch[] = [
-  { id: 'b1', name: 'Chi nhánh Quận 1', address: '12 Nguyễn Huệ, Quận 1, TP.HCM' },
-  { id: 'b2', name: 'Chi nhánh Hà Nội', address: '45 Bà Triệu, Hoàn Kiếm, Hà Nội' },
-  { id: 'b3', name: 'Chi nhánh Đà Nẵng', address: '88 Lê Duẩn, Hải Châu, Đà Nẵng' },
-]
+//export const branches: Branch[] = [
+ // { id: 'b1', name: 'Chi nhánh Quận 1', address: '12 Nguyễn Huệ, Quận 1, TP.HCM' },
+  //{ id: 'b2', name: 'Chi nhánh Hà Nội', address: '45 Bà Triệu, Hoàn Kiếm, Hà Nội' },
+  //{ id: 'b3', name: 'Chi nhánh Đà Nẵng', address: '88 Lê Duẩn, Hải Châu, Đà Nẵng' },
+//]
 
-export const staffList: Staff[] = [
-  { id: 's1', name: 'Nguyễn Văn An', role: 'Chủ doanh nghiệp' },
-  { id: 's2', name: 'Trần Thị Bích', role: 'Quản lý' },
-  { id: 's3', name: 'Lê Hoàng Cường', role: 'Nhân viên bán hàng' },
-  { id: 's4', name: 'Phạm Thu Dung', role: 'Nhân viên bán hàng' },
-  { id: 's5', name: 'Võ Minh Đức', role: 'Nhân viên kho' },
-]
+//export const staffList: Staff[] = [
+  //{ id: 's1', name: 'Nguyễn Văn An', role: 'Chủ doanh nghiệp' },
+  //{ id: 's2', name: 'Trần Thị Bích', role: 'Quản lý' },
+  //{ id: 's3', name: 'Lê Hoàng Cường', role: 'Nhân viên bán hàng' },
+  //{ id: 's4', name: 'Phạm Thu Dung', role: 'Nhân viên bán hàng' },
+  //{ id: 's5', name: 'Võ Minh Đức', role: 'Nhân viên kho' },
+//]
 
 const productSeed: Array<[string, string, number, number, number, string]> = [
   ['iPhone 15 Pro Max 256GB', 'Điện thoại', 27500000, 32990000, 24, 'cái'],
@@ -291,8 +291,13 @@ function buildOrders(): Order[] {
     const paymentStatus: PaymentStatus =
       status === 'completed' ? 'paid' : status === 'cancelled' ? 'unpaid' : i % 3 === 0 ? 'partial' : 'unpaid'
     const paid = paymentStatus === 'paid' ? total : paymentStatus === 'partial' ? Math.round(total / 2) : 0
-    const staff = staffList[(i % 3) + 2]
-    const branch = branches[i % branches.length]
+    const staff = {
+  name: 'ADMIN',
+}
+
+const branch = {
+  name: 'Kho chính',
+}
     const day = String((i % 27) + 1).padStart(2, '0')
     const month = String((i % 5) + 1).padStart(2, '0')
     const dateStr = `2026-${month}-${day}T${String((i % 12) + 8).padStart(2, '0')}:${String((i * 7) % 60).padStart(2, '0')}:00`
@@ -362,10 +367,12 @@ export const revenueByDay = Array.from({ length: 30 }, (_, i) => {
   }
 })
 
-export const revenueByBranch = branches.map((b, i) => ({
-  branch: b.name.replace('Chi nhánh ', ''),
-  revenue: [1240000000, 980000000, 620000000][i],
-}))
+export const revenueByBranch = [
+  {
+    branch: 'Kho chính',
+    revenue: 1240000000,
+  },
+]
 
 export const topProducts = [
   { name: 'iPhone 15 Pro Max', sold: 142, revenue: 4684580000 },

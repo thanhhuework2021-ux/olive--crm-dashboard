@@ -1,6 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import {
+  useState,
+  useEffect,
+} from 'react'
+
 import { supabase } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
@@ -9,8 +13,15 @@ export default function NhapKhoForm({
 }: {
   products: any[]
 }) {
-  const [selectedId, setSelectedId] =
+
+const [showAll, setShowAll] =
+  useState(false)
+
+const [selectedId, setSelectedId] =
     useState('')
+
+const [selectedName, setSelectedName] =
+  useState('')
 
     const [quantity, setQuantity] =
   useState('')
@@ -21,10 +32,38 @@ const [note, setNote] =
 const [loading, setLoading] =
   useState(false)
 
+const [search,setSearch] =
+  useState('')
+
   const selectedProduct =
     products.find(
       (p) => p.id === selectedId
     )
+
+  const variants =
+  products.filter(
+    (p) =>
+      p.name === selectedName
+  )
+
+  const filteredProducts =
+  products.filter((p) =>
+    p.name
+      ?.toLowerCase()
+      .includes(
+        search.toLowerCase()
+      )
+  )
+
+  useEffect(() => {
+  if (variants.length > 0) {
+    setSelectedId(
+      variants[0].id
+    )
+  }
+}, [selectedName])
+
+    const currentUser = 'ADMIN'
 
     const handleImport = async () => {
   if (!selectedProduct) {
@@ -78,7 +117,7 @@ const [loading, setLoading] =
       reference_id:
         `PN${Date.now()}`,
 
-      created_by: 'ADMIN',
+      created_by: currentUser,
 
       note,
     })
@@ -100,35 +139,118 @@ const [loading, setLoading] =
 }
 
   return (
+
     <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 p-6">
 
-      <label className="mb-2 block">
-        Chọn SKU
-      </label>
+    <div className="mb-2 flex items-center justify-between">
 
-      <select
-        value={selectedId}
-        onChange={(e) =>
-          setSelectedId(e.target.value)
-        }
-        className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
-      >
-        <option value="">
-          Chọn sản phẩm
-        </option>
+  <label>
+    Tìm sản phẩm
+  </label>
 
-        {products.map((p) => (
-          <option
-            key={p.id}
-            value={p.id}
-          >
-            {p.sku} | {p.name}
-          </option>
-        ))}
-      </select>
+  <button
+    type="button"
+    onClick={() =>
+      setShowAll(!showAll)
+    }
+    className="
+      rounded-lg
+      border
+      border-slate-700
+      bg-slate-900
+      px-4
+      py-2
+      text-sm
+      hover:border-cyan-500
+    "
+  >
+    {showAll
+      ? '▲ Thu gọn'
+      : '▼ Hiển thị tất cả'}
+  </button>
+
+</div>
+
+<input
+  placeholder="Nhập tên sản phẩm..."
+  value={search}
+  onChange={(e) =>
+    setSearch(e.target.value)
+  }
+  className="
+    w-full
+    rounded-xl
+    border
+    border-slate-700
+    bg-slate-900
+    p-3
+    text-white
+  "
+/>
+
+<div className="mb-4 flex justify-end">
+
+</div>
+
+<div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+
+  {[
+    ...new Map(
+      products
+        .filter((p) =>
+          p.name
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            )
+        )
+        .map((p) => [
+          p.name,
+          p,
+        ])
+    ).values(),
+
+  ]
+.slice(
+  0,
+  showAll ? 999 : 8
+)
+.map((item) => (
+
+    <button
+      key={item.name}
+      type="button"
+      onClick={() => {
+        setSelectedName(
+          item.name
+        )
+      }}
+      className="
+        rounded-xl
+        border
+        border-slate-700
+        bg-slate-900
+        p-4
+        text-left
+        transition
+        hover:border-cyan-500
+      "
+    >
+
+      <div className="font-semibold">
+        {item.name}
+      </div>
+
+    </button>
+
+  ))}
+
+  </div>
 
       {selectedProduct && (
-        <div className="mt-6 grid grid-cols-2 gap-4">
+         
+
+        <div className="mt-6 space-y-6">
 
           <div>
             <label>Tên sản phẩm</label>
@@ -139,6 +261,72 @@ const [loading, setLoading] =
               className="mt-2 w-full rounded-lg bg-slate-800 p-3"
             />
           </div>
+
+          <div className="col-span-2">
+
+  <div className="mb-4 overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+
+    <img
+  src={
+    selectedProduct.image_url ||
+    '/placeholder-product.png'
+  }
+  alt={selectedProduct.name}
+  className="
+    h-64
+    w-64
+    rounded-xl
+    object-cover
+    border
+    border-slate-700
+  "
+/>
+
+  </div>
+
+</div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+  {products
+    .filter(
+      (x) =>
+        x.name === selectedProduct?.name
+    )
+    .map((item) => (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() =>
+          setSelectedId(item.id)
+        }
+        className={`
+          rounded-xl
+          border
+          p-4
+          text-left
+
+          ${
+            selectedId === item.id
+              ? 'border-cyan-500 bg-cyan-500/10'
+              : 'border-slate-700'
+          }
+        `}
+      >
+        <div className="font-semibold">
+          {item.color}
+        </div>
+
+        <div className="text-sm text-slate-400">
+          {item.sku}
+        </div>
+
+        <div className="mt-2 text-green-400">
+          Tồn:
+          {item.stock_quantity}
+        </div>
+      </button>
+    ))}
+</div>
 
           <div className="col-span-2 mt-4">
 
@@ -182,44 +370,6 @@ const [loading, setLoading] =
   </button>
 
 </div>
-
-          <div>
-            <label>Màu sắc</label>
-
-            <input
-              disabled
-              value={
-                selectedProduct.color
-              }
-              className="mt-2 w-full rounded-lg bg-slate-800 p-3"
-            />
-          </div>
-
-          <div>
-            <label>Size</label>
-
-            <input
-              disabled
-              value={
-                selectedProduct.size
-              }
-              className="mt-2 w-full rounded-lg bg-slate-800 p-3"
-            />
-          </div>
-
-          <div>
-            <label>
-              Tồn kho hiện tại
-            </label>
-
-            <input
-              disabled
-              value={
-                selectedProduct.stock_quantity
-              }
-              className="mt-2 w-full rounded-lg bg-slate-800 p-3"
-            />
-          </div>
 
         </div>
       )}
