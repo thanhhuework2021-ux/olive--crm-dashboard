@@ -78,11 +78,11 @@ const addToCart = (product: any) => {
   </h2>
 
   {cart.length === 0 ? (
-    <p className="text-slate-400">
-      Chưa có sản phẩm
-    </p>
-  ) : (
-    cart.map((item) => (
+  <p className="text-slate-400">
+    Chưa có sản phẩm
+  </p>
+) : (
+  cart.map((item) => (
       <div
         key={item.id}
         className="mb-2 flex items-center justify-between border-b border-slate-800 pb-2"

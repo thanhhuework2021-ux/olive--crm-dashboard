@@ -46,12 +46,12 @@ export default function DateFilter({
           text-white
         "
       >
+        <option value="all">Tất cả</option>
         <option value="today">Hôm nay</option>
         <option value="yesterday">Hôm qua</option>
         <option value="7">7 ngày</option>
         <option value="30">30 ngày</option>
         <option value="60">60 ngày</option>
-        <option value="all">Tất cả</option>
       </select>
 
       <select

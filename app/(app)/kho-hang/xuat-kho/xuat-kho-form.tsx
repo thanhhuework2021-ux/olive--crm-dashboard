@@ -52,6 +52,14 @@ export default function XuatKhoForm({
       const newStock =
         selectedProduct.stock_quantity - qty
 
+       const {
+  data: { user },
+} = await supabase.auth.getUser()
+
+const currentUser =
+  user?.email?.split('@')[0] || 'ADMIN'
+
+
       const { error: updateError } =
         await supabase
           .from('products')
@@ -93,7 +101,7 @@ export default function XuatKhoForm({
             reference_id:
               `PX${Date.now()}`,
 
-            created_by: 'ADMIN',
+            created_by: currentUser,
 
             note,
           })

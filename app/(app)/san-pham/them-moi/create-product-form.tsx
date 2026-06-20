@@ -1,27 +1,69 @@
 'use client'
 
-import { useState } from 'react'
+import React, {
+  useState,
+  useEffect,
+} from 'react'
+import { Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import {
+  Tag,
+  FolderOpen,
+  Palette
+} from 'lucide-react'
+
+
 
 export default function CreateProductForm() {
   const router = useRouter()
 
   const [loading, setLoading] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] =
+  useState(false)
+
+const [createdSku, setCreatedSku] =
+  useState('')
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState('DEN BAN')
-  const [size, setSize] = useState('Medium')
+ const [categories, setCategories] =
+  useState<string[]>([])
+
+const [showCategoryModal, setShowCategoryModal] =
+  useState(false)
+
+const [newCategory, setNewCategory] =
+  useState('')
+  //const [size, setSize] = useState('Medium')//
   const [color, setColor] = useState('')
   const [costPrice, setCostPrice] = useState('')
   const [salePrice, setSalePrice] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
 
-  const generateSku = (
-    category: string,
-    name: string,
-    color: string,
-    size: string
-  ) => {
+  useEffect(() => {
+  loadCategories()
+}, [])
+
+const loadCategories = async () => {
+  const { data } =
+    await supabase
+      .from('categories')
+      .select('name')
+      .order('name')
+
+  if (!data) return
+
+  setCategories(
+    data.map((item) => item.name)
+  )
+}
+
+ const generateSku = (
+  category: string,
+  name: string,
+  color: string
+) => {
     const categoryMap: Record<string, string> = {
       'DEN BAN': 'DEN',
       'DEN CAY': 'DCY',
@@ -40,11 +82,7 @@ export default function CreateProductForm() {
       YELLOW: 'YEL',
     }
 
-    const sizeMap: Record<string, string> = {
-      Small: 'S',
-      Medium: 'M',
-      Large: 'L',
-    }
+    
 
     const shortName = name
       .trim()
@@ -55,8 +93,46 @@ export default function CreateProductForm() {
 
     const random = Math.floor(100 + Math.random() * 900)
 
-    return `${categoryMap[category]}-${shortName}-${colorMap[color.toUpperCase()] || 'NON'}-${sizeMap[size]}-${random}`
+    const categoryCode =
+  categoryMap[category] ||
+  category
+    .replace(/\s+/g, '')
+    .substring(0, 3)
+    .toUpperCase()
+
+return `${categoryCode}-${shortName}-${colorMap[color.toUpperCase()] || 'NON'}-${random}`
   }
+
+  const handleUpload = async (
+e: React.ChangeEvent<HTMLInputElement>
+) => {
+const file = e.target.files?.[0]
+
+if (!file) return
+
+const fileName =
+`${crypto.randomUUID()}.${
+      file.name.split('.').pop()
+    }`
+
+const { error } =
+await supabase.storage
+.from('products')
+.upload(fileName, file)
+
+if (error) {
+alert(error.message)
+return
+}
+
+const { data } =
+supabase.storage
+.from('products')
+.getPublicUrl(fileName)
+
+setImageUrl(data.publicUrl)
+}
+
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -68,11 +144,10 @@ export default function CreateProductForm() {
       setLoading(true)
 
       const sku = generateSku(
-        category,
-        name,
-        color,
-        size
-      )
+  category,
+  name,
+  color
+)
 
       const { error } = await supabase
         .from('products')
@@ -80,12 +155,13 @@ export default function CreateProductForm() {
           sku,
           name,
           category,
-          size,
+    
           color,
           cost_price: Number(costPrice || 0),
           sale_price: Number(salePrice || 0),
           stock_quantity: 0,
           status: 'active',
+          image_url: imageUrl,
         })
 
       if (error) {
@@ -94,10 +170,8 @@ export default function CreateProductForm() {
         return
       }
 
-      alert(`Đã tạo sản phẩm ${sku}`)
-
-      router.push('/san-pham')
-      router.refresh()
+    setCreatedSku(sku)
+setShowSuccessModal(true)
     } catch (error) {
       console.error(error)
       alert('Có lỗi xảy ra')
@@ -106,9 +180,30 @@ export default function CreateProductForm() {
     }
   }
 
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950 p-6">
-      <div className="grid grid-cols-2 gap-4">
+  const previewSku =
+  `${category
+    .replace(/\s+/g, '')
+    .substring(0,3)
+    .toUpperCase()}-${
+      (name || 'NEW')
+        .split(' ')
+        .slice(-1)[0]
+        .substring(0,3)
+        .toUpperCase()
+    }-${
+      (color || 'WHITE')
+        .substring(0,3)
+        .toUpperCase()
+    }`
+
+return (
+  <div className="rounded-xl border border-slate-800 bg-slate-950 p-6">
+
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+      {/* LEFT */}
+
+      <div className="lg:col-span-2 space-y-6">
 
         <div>
           <label className="mb-2 block text-sm">
@@ -128,46 +223,84 @@ export default function CreateProductForm() {
             Danh mục
           </label>
 
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
-          >
-            <option value="DEN BAN">Đèn bàn</option>
-            <option value="DEN CAY">Đèn cây</option>
-            <option value="THAM">Thảm</option>
-            <option value="LICH">Lịch</option>
-          </select>
+          <div className="flex gap-2">
+
+            <select
+              value={category}
+              onChange={(e) =>
+                setCategory(e.target.value)
+              }
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-900 p-3"
+            >
+              {categories.map((c) => (
+                <option
+                  key={c}
+                  value={c}
+                >
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowCategoryModal(true)
+              }
+              className="rounded-lg bg-cyan-500 px-4 font-bold text-black"
+            >
+              <Plus
+  size={20}
+  className="
+    transition-transform
+    duration-300
+    group-hover:rotate-90
+  "
+/>
+            </button>
+
+          </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm">
-            Size
-          </label>
-
-          <select
-            value={size}
-            onChange={(e) => setSize(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
-          >
-            <option>Small</option>
-            <option>Medium</option>
-            <option>Large</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm">
+          <label className="mb-3 block text-sm">
             Màu sắc
           </label>
+      
 
-          <input
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            placeholder="WHITE"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
-          />
+          <div className="flex flex-wrap gap-2">
+            {[
+              'WHITE',
+              'BLACK',
+              'GREEN',
+              'ORANGE',
+              'CREAM',
+              'RED',
+            ].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setColor(c)}
+                className={`rounded-full px-4 py-2 text-sm ${
+                  color === c
+                    ? 'bg-cyan-500 text-black'
+                    : 'bg-slate-800 text-white'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <div className="mt-3">
+  <input
+    value={color}
+    onChange={(e) => setColor(e.target.value)}
+    placeholder="Hoặc nhập màu mới..."
+    className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
+  />
+</div>
 
         <div>
           <label className="mb-2 block text-sm">
@@ -177,8 +310,9 @@ export default function CreateProductForm() {
           <input
             type="number"
             value={costPrice}
-            onChange={(e) => setCostPrice(e.target.value)}
-            placeholder="0"
+            onChange={(e) =>
+              setCostPrice(e.target.value)
+            }
             className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
           />
         </div>
@@ -191,32 +325,353 @@ export default function CreateProductForm() {
           <input
             type="number"
             value={salePrice}
-            onChange={(e) => setSalePrice(e.target.value)}
-            placeholder="0"
+            onChange={(e) =>
+              setSalePrice(e.target.value)
+            }
             className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
           />
         </div>
 
+
       </div>
 
-      <div className="col-span-full flex justify-center py-4">
+      {/* RIGHT */}
+
+     <div className="space-y-4">
+
+  <div className="
+rounded-2xl
+border
+border-cyan-500/30
+bg-gradient-to-br
+from-cyan-500/10
+to-slate-900
+p-5
+shadow-[0_0_30px_rgba(6,182,212,0.15)]
+transition-all
+duration-300
+hover:shadow-[0_0_50px_rgba(6,182,212,0.35)]
+hover:-translate-y-1
+">
+    
+    <div className="flex items-center gap-2">
+  <Tag size={14} className="text-cyan-400" />
+  <p className="text-xs uppercase text-slate-400">
+    SKU Preview
+  </p>
+</div>
+
+
+    <p className="mt-3 font-mono text-xl font-bold text-cyan-400">
+  {previewSku}
+</p>
+
+  </div>
+
+  <div className="
+rounded-2xl
+border
+border-cyan-500/30
+bg-gradient-to-br
+from-cyan-500/10
+to-slate-900
+p-5
+shadow-[0_0_30px_rgba(6,182,212,0.15)]
+transition-all
+duration-300
+hover:shadow-[0_0_50px_rgba(6,182,212,0.35)]
+hover:-translate-y-1
+">
+    
+    <div className="flex items-center gap-2">
+  <FolderOpen size={14} className="text-cyan-400" />
+  <p className="text-xs text-slate-400">
+    Danh mục
+  </p>
+</div>
+
+    <p className="mt-2 font-semibold">
+      {category}
+    </p>
+  </div>
+
+  <div className="
+rounded-2xl
+border
+border-cyan-500/30
+bg-gradient-to-br
+from-cyan-500/10
+to-slate-900
+p-5
+shadow-[0_0_30px_rgba(6,182,212,0.15)]
+transition-all
+duration-300
+hover:shadow-[0_0_50px_rgba(6,182,212,0.35)]
+hover:-translate-y-1
+">
+    
+  <div className="flex items-center gap-2">
+  <Palette size={14} className="text-cyan-400" />
+  <p className="text-xs text-slate-400">
+    Màu sắc
+  </p>
+</div>
+
+    <p className="mt-2 font-semibold">
+      {color || 'Chưa chọn'}
+    </p>
+  </div>
+
+  <div>
+    <p className="mb-2 text-sm font-medium">
+      Hình ảnh sản phẩm
+    </p>
+
+    <label
+  className="
+  mx-auto
+  flex
+  h-56
+  w-56
+  cursor-pointer
+      items-center
+      justify-center
+      overflow-hidden
+      rounded-2xl
+      border-2
+      border-dashed
+      border-slate-700
+      bg-slate-900
+      hover:border-cyan-500
+      "
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt="preview"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="text-center">
+          <div className="text-5xl">
+            📷
+          </div>
+
+          <p className="mt-2 text-sm">
+            Upload ảnh sản phẩm
+          </p>
+        </div>
+      )}
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleUpload}
+        className="hidden"
+      />
+    </label>
+  </div>
+
+</div>
+
+    </div>
+
+    <div className="mt-8 flex justify-end gap-3 border-t border-slate-800 pt-6">
+
+      <button
+        type="button"
+        onClick={() => router.push('/san-pham')}
+        className="rounded-lg border border-slate-700 px-4 py-2"
+      >
+        Hủy
+      </button>
+
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={loading}
+        className="
+  rounded-xl
+  bg-cyan-500
+  px-4
+  font-bold
+  text-black
+  transition-all
+  duration-300
+  hover:scale-110
+  hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]
+  active:scale-95
+"
+      >
+        {loading
+          ? 'Đang lưu...'
+          : 'Lưu sản phẩm'}
+      </button>
+
+    </div>
+
+    {showCategoryModal && (
+      <div
+  className="
+  fixed
+  inset-0
+  z-50
+  flex
+  items-center
+  justify-center
+  bg-black/60
+  backdrop-blur-sm
+  animate-in
+  fade-in
+  duration-300
+"
+>
+
+        <div className="w-full max-w-md rounded-xl bg-slate-900 p-6">
+
+          <h2 className="mb-4 text-xl font-bold">
+            Tạo danh mục
+          </h2>
+
+          <input
+            value={newCategory}
+            onChange={(e) =>
+              setNewCategory(
+                e.target.value
+              )
+            }
+            placeholder="VD: DEN TREO"
+            className="w-full rounded-lg border border-slate-700 bg-slate-800 p-3"
+          />
+
+          <div className="mt-4 flex justify-end gap-2">
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowCategoryModal(false)
+              }
+              className="rounded-lg border border-slate-700 px-4 py-2"
+            >
+              Hủy
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+  if (!newCategory) return
+
+  const categoryName =
+    newCategory.toUpperCase()
+
+  const { error } =
+    await supabase
+      .from('categories')
+      .insert({
+        name: categoryName,
+        code: categoryName
+          .replaceAll(' ', '')
+          .substring(0, 3),
+      })
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  await loadCategories()
+
+  setCategory(categoryName)
+
+  setNewCategory('')
+  setShowCategoryModal(false)
+
+  router.refresh()
+}}
+              
+              className="rounded-lg bg-cyan-500 px-4 py-2 font-semibold text-black"
+            >
+              Lưu
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    )}
+
+    {showSuccessModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+
+    <div className="w-full max-w-md rounded-2xl border border-cyan-500/20 bg-slate-900 p-6">
+
+      <div className="mb-4 text-center">
+
+        <div className="mb-3 text-5xl">
+          ✅
+        </div>
+
+        <h2 className="text-xl font-bold">
+          Tạo sản phẩm thành công
+        </h2>
+
+        <p className="mt-3 text-slate-400">
+  Sản phẩm vừa tạo:
+</p>
+
+<p className="mt-2 text-lg font-semibold text-cyan-400">
+  {name}
+</p>
+
+      </div>
+
+      <div className="flex gap-3">
+
         <button
-          type="button"
-          onClick={() => router.push('/san-pham')}
-          className="rounded-lg border border-slate-700 px-4 py-2"
+          onClick={() => {
+            setShowSuccessModal(false)
+
+            setName('')
+            setColor('')
+            setCostPrice('')
+            setSalePrice('')
+            setImageUrl('')
+          }}
+          className="
+            flex-1
+            rounded-xl
+            border
+            border-slate-700
+            py-3
+          "
         >
-          Hủy
+          Tạo tiếp
         </button>
 
         <button
-          type="button"
-          onClick={handleSave}
-          disabled={loading}
-          className="rounded-lg bg-cyan-500 px-5 py-2 font-semibold text-black"
-        >
-          {loading ? 'Đang lưu...' : 'Lưu sản phẩm'}
+          onClick={() =>
+            router.push('/san-pham')
+          }
+          className="
+            flex-1
+            rounded-xl
+            bg-cyan-500
+            py-3
+            font-semibold
+            text-black
+          "
+                >
+          Về danh sách
         </button>
+
       </div>
+
+    </div>
+
+  </div>
+
+)}
     </div>
   )
 }

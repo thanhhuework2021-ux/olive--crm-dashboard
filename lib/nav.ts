@@ -56,10 +56,24 @@ export const navItems: NavItem[] = [
   },
 
   {
-    title: 'Sản phẩm',
-    url: '/san-pham',
-    icon: Package,
-  },
+  title: 'Sản phẩm',
+  url: '/san-pham',
+  icon: Package,
+  items: [
+    {
+      title: 'Danh sách sản phẩm',
+      url: '/san-pham',
+    },
+    {
+      title: 'Danh mục',
+      url: '/danh-muc',
+    },
+    {
+      title: 'Thêm sản phẩm',
+      url: '/san-pham/them-moi',
+    },
+  ],
+},
 
   //{
     //title: 'Nhà cung cấp',
