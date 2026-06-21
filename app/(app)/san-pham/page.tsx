@@ -48,6 +48,41 @@ if (category !== 'ALL') {
 const { data: products } =
   await query.order('sku')
 
+const {
+  data: allProducts,
+} = await supabase
+  .from('products')
+  .select(`
+    id,
+    status,
+    stock_quantity
+  `)
+
+const totalProducts =
+  allProducts?.length || 0
+
+const activeProducts =
+  allProducts?.filter(
+    (p) => p.status === 'active'
+  ).length || 0
+
+const inactiveProducts =
+  allProducts?.filter(
+    (p) => p.status === 'inactive'
+  ).length || 0
+
+const lowStockProducts =
+  allProducts?.filter(
+    (p) =>
+      p.stock_quantity > 0 &&
+      p.stock_quantity <= 5
+  ).length || 0
+
+const outOfStockProducts =
+  allProducts?.filter(
+    (p) => p.stock_quantity === 0
+  ).length || 0
+
 
 console.log(
   'PRODUCT COUNT:',
@@ -120,8 +155,60 @@ console.log(
 
 </div>
 
+<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-5">
+
+  <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+    <p className="text-sm text-slate-400">
+      Tổng SP
+    </p>
+    <h2 className="mt-2 text-3xl font-bold">
+      {totalProducts}
+    </h2>
+  </div>
+
+  <div className="rounded-xl border border-green-500/20 bg-slate-900 p-5">
+    <p className="text-sm text-slate-400">
+      Đang bán
+    </p>
+    <h2 className="mt-2 text-3xl font-bold text-green-400">
+      {activeProducts}
+    </h2>
+  </div>
+
+  <div className="rounded-xl border border-red-500/20 bg-slate-900 p-5">
+    <p className="text-sm text-slate-400">
+      Đã ẩn
+    </p>
+    <h2 className="mt-2 text-3xl font-bold text-red-400">
+      {inactiveProducts}
+    </h2>
+  </div>
+
+  <div className="rounded-xl border border-yellow-500/20 bg-slate-900 p-5">
+    <p className="text-sm text-slate-400">
+      Sắp hết
+    </p>
+    <h2 className="mt-2 text-3xl font-bold text-yellow-400">
+      {lowStockProducts}
+    </h2>
+  </div>
+
+  <div className="rounded-xl border border-red-700/20 bg-slate-900 p-5">
+    <p className="text-sm text-slate-400">
+      Hết hàng
+    </p>
+    <h2 className="mt-2 text-3xl font-bold text-red-500">
+      {outOfStockProducts}
+    </h2>
+  </div>
+
+</div>
+
 
       <div className="overflow-hidden rounded-xl border border-slate-800">
+
+
+
   <ProductsTable products={products || []} />
 </div>
 

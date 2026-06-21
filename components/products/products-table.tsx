@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import * as XLSX from 'xlsx'
 
 export default function ProductsTable({
   products,
@@ -31,6 +32,60 @@ const [currentPage, setCurrentPage] =
 
 const ITEMS_PER_PAGE = 10
 
+const handleExportExcel = () => {
+
+  const exportData =
+    productList.map((item) => ({
+
+      SKU: item.sku,
+
+      'Tên sản phẩm':
+        item.name,
+
+      'Danh mục':
+        item.category,
+
+      'Màu sắc':
+        item.color || '',
+
+      'Giá vốn':
+        item.cost_price,
+
+      'Giá bán':
+        item.sale_price,
+
+      'Tồn kho':
+        item.stock_quantity,
+
+      'Trạng thái':
+        item.status,
+
+      'Ngày tạo':
+        item.created_at,
+    }))
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      exportData
+    )
+
+  const workbook =
+    XLSX.utils.book_new()
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'Products'
+  )
+
+  XLSX.writeFile(
+    workbook,
+    `products-${new Date()
+      .toISOString()
+      .slice(0,10)}.xlsx`
+  )
+}
+
 const [showDeleteModal, setShowDeleteModal] =
   useState(false)
 
@@ -38,6 +93,30 @@ const [selectedProduct, setSelectedProduct] =
   useState<any>(null)
 
 const [viewModal, setViewModal] =
+  useState(false)
+
+const [importModal, setImportModal] =
+  useState(false)
+
+const [exportModal, setExportModal] =
+  useState(false)
+
+const [exportQty, setExportQty] =
+  useState('')
+
+const [exportNote, setExportNote] =
+  useState('')
+
+const [exportLoading, setExportLoading] =
+  useState(false)
+
+const [importQty, setImportQty] =
+  useState('')
+
+const [importNote, setImportNote] =
+  useState('')
+
+const [importLoading, setImportLoading] =
   useState(false)
 
 const [openMenu, setOpenMenu] =
@@ -158,6 +237,12 @@ const totalPages =
 
   <div className="flex items-center gap-3">
 
+    <div className="mb-4 flex justify-end">
+
+
+
+</div>
+
     <input
       value={search}
       onChange={(e) =>
@@ -240,93 +325,97 @@ backdrop-blur-sm
 
 </div>
 
-<div className="mt-2 ml-4 flex flex-wrap items-center gap-2">
+<div className="mt-2 flex items-center justify-between px-4">
+
+  <div className="flex flex-wrap items-center gap-2">
+
+    <button
+      onClick={() => setQuickFilter('ALL')}
+      className={`h-8 min-w-[80px] rounded-full px-4 font-medium text-sm transition-all duration-300 hover:scale-105 ${
+        quickFilter === 'ALL'
+          ? 'bg-cyan-500 text-black'
+          : 'bg-slate-800'
+      }`}
+    >
+      Tất cả
+    </button>
+
+    <button
+      onClick={() => setQuickFilter('ACTIVE')}
+      className={`h-8 min-w-[80px] rounded-full px-4 font-medium text-sm ${
+        quickFilter === 'ACTIVE'
+          ? 'bg-green-500 text-black'
+          : 'bg-slate-800'
+      }`}
+    >
+      Đang bán
+    </button>
+
+    <button
+      onClick={() => setQuickFilter('INACTIVE')}
+      className={`h-8 min-w-[80px] rounded-full px-4 font-medium text-sm ${
+        quickFilter === 'INACTIVE'
+          ? 'bg-red-500 text-white'
+          : 'bg-slate-800'
+      }`}
+    >
+      Đã ẩn
+    </button>
+
+    <button
+      onClick={() => setQuickFilter('LOW_STOCK')}
+      className={`h-8 min-w-[80px] rounded-full px-4 font-medium text-sm ${
+        quickFilter === 'LOW_STOCK'
+          ? 'bg-yellow-500 text-black'
+          : 'bg-slate-800'
+      }`}
+    >
+      Sắp hết
+    </button>
+
+    <button
+      onClick={() => setQuickFilter('OUT_OF_STOCK')}
+      className={`h-8 min-w-[80px] rounded-full px-4 font-medium text-sm ${
+        quickFilter === 'OUT_OF_STOCK'
+          ? 'bg-red-700 text-white'
+          : 'bg-slate-800'
+      }`}
+    >
+      Hết hàng
+    </button>
+
+  </div>
 
   <button
-    onClick={() => setQuickFilter('ALL')}
-    className={`h-8
-min-w-[80px]
-rounded-full
-px-4
-font-medium
-text-sm
-transition-all
-duration-300
-hover:scale-105
-${
-      quickFilter === 'ALL'
-        ? 'bg-cyan-500 text-black'
-        : 'bg-slate-800'
-    }`}
-  >
-    Tất cả
-  </button>
+    onClick={handleExportExcel}
+    className="
+  h-8
+  min-w-[120px]
+  rounded-full
+  border
+  border-cyan-500/40
+  bg-cyan-500
+  px-4
+  text-sm
+  font-medium
+  text-black
+  transition-all
+  duration-300
 
-  <button
-    onClick={() => setQuickFilter('ACTIVE')}
-    className={`h-8
-min-w-[80px]
-rounded-full
-px-4
-font-medium
-transition-all text-sm ${
-      quickFilter === 'ACTIVE'
-        ? 'bg-green-500 text-black'
-        : 'bg-slate-800'
-    }`}
-  >
-    Đang bán
-  </button>
+  hover:scale-105
+  hover:border-cyan-300
+  hover:shadow-[0_0_15px_rgba(34,211,238,0.6)]
+  hover:shadow-cyan-500/50
 
-  <button
-    onClick={() => setQuickFilter('INACTIVE')}
-    className={`h-8
-min-w-[80px]
-rounded-full
-px-4
-font-medium
-transition-all text-sm ${
-      quickFilter === 'INACTIVE'
-        ? 'bg-red-500 text-white'
-        : 'bg-slate-800'
-    }`}
+  active:scale-95
+"
   >
-    Đã ẩn
-  </button>
-
-  <button
-    onClick={() => setQuickFilter('LOW_STOCK')}
-    className={`h-8
-min-w-[80px]
-rounded-full
-px-4
-font-medium
-transition-all text-sm ${
-      quickFilter === 'LOW_STOCK'
-        ? 'bg-yellow-500 text-black'
-        : 'bg-slate-800'
-    }`}
-  >
-    Sắp hết
-  </button>
-
-  <button
-    onClick={() => setQuickFilter('OUT_OF_STOCK')}
-    className={`h-8
-min-w-[80px]
-rounded-full
-px-4
-font-medium
-transition-all text-sm ${
-      quickFilter === 'OUT_OF_STOCK'
-        ? 'bg-red-700 text-white'
-        : 'bg-slate-800'
-    }`}
-  >
-    Hết hàng
+    📊 Xuất Excel
   </button>
 
 </div>
+
+
 
 <div className="mb-5"></div>
 
@@ -594,6 +683,42 @@ backdrop-blur-sm
       </button>
 
       <button
+  onClick={() => {
+    setSelectedProduct(item)
+    setImportModal(true)
+    setOpenMenu(null)
+  }}
+  className="
+    block
+    w-full
+    px-4
+    py-2
+    text-left
+    hover:bg-slate-800
+  "
+>
+  📥 Nhập kho
+</button>
+
+<button
+  onClick={() => {
+    setSelectedProduct(item)
+    setExportModal(true)
+    setOpenMenu(null)
+  }}
+  className="
+    block
+    w-full
+    px-4
+    py-2
+    text-left
+    hover:bg-slate-800
+  "
+>
+  📤 Xuất kho
+</button>
+
+      <button
         onClick={() => {
           setSelectedProduct(item)
           setShowDeleteModal(true)
@@ -610,6 +735,8 @@ backdrop-blur-sm
       >
         🚫 Ẩn sản phẩm
       </button>
+
+
 
     </div>
   )}
@@ -767,6 +894,420 @@ setSelectedProduct(null)
     </div>
 
   </div>
+)}
+
+{importModal && selectedProduct && (
+
+<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+
+  <div className="w-full max-w-lg rounded-2xl bg-slate-900 p-6">
+
+    <h2 className="mb-6 text-2xl font-bold">
+      Nhập kho nhanh
+    </h2>
+
+    <div className="space-y-4">
+
+      <div>
+
+        <label>Tên sản phẩm</label>
+
+        <div>
+
+  <label>Màu sắc</label>
+
+  <input
+    disabled
+    value={selectedProduct.color || '-'}
+    className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+  />
+
+</div>
+
+<div>
+
+  <label>Giá vốn</label>
+
+  <input
+    disabled
+    value={
+      Number(
+        selectedProduct.cost_price || 0
+      ).toLocaleString('vi-VN') + ' đ'
+    }
+    className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+  />
+
+</div>
+
+        <input
+          disabled
+          value={selectedProduct.name}
+          className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+        />
+
+      </div>
+
+      <div>
+
+        <label>Tồn hiện tại</label>
+
+        <input
+          disabled
+          value={selectedProduct.stock_quantity}
+          className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+        />
+
+      </div>
+
+      <div>
+
+        <label>Số lượng nhập</label>
+
+        <input
+          type="number"
+          value={importQty}
+          onChange={(e) =>
+            setImportQty(e.target.value)
+          }
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
+        />
+
+      </div>
+
+      <div>
+
+        <label>Ghi chú</label>
+
+        <textarea
+          value={importNote}
+          onChange={(e) =>
+            setImportNote(e.target.value)
+          }
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
+        />
+
+      </div>
+
+    </div>
+
+    <div className="mt-6 flex gap-3">
+
+      <button
+        onClick={() => {
+          setImportModal(false)
+          setImportQty('')
+          setImportNote('')
+        }}
+        className="flex-1 rounded-xl border border-slate-700 py-3"
+      >
+        Hủy
+      </button>
+
+      <button
+        disabled={importLoading}
+        onClick={async () => {
+
+          if (!importQty) {
+            alert('Vui lòng nhập số lượng')
+            return
+          }
+
+          try {
+
+            setImportLoading(true)
+
+            const qty =
+              Number(importQty)
+
+            const newStock =
+              selectedProduct.stock_quantity +
+              qty
+
+            const { error: updateError } =
+              await supabase
+                .from('products')
+                .update({
+                  stock_quantity:
+                    newStock,
+                })
+                .eq(
+                  'id',
+                  selectedProduct.id
+                )
+
+            if (updateError) {
+              alert(updateError.message)
+              return
+            }
+
+            const { error: logError } =
+              await supabase
+                .from(
+                  'inventory_transactions'
+                )
+                .insert({
+
+                  product_id:
+                    selectedProduct.id,
+
+                  sku:
+                    selectedProduct.sku,
+
+                  transaction_type:
+                    'IMPORT',
+
+                  quantity: qty,
+
+                  stock_after:
+                    newStock,
+
+                  reference_type:
+                    'PURCHASE',
+
+                  reference_id:
+                    `PN${Date.now()}`,
+
+                  created_by:
+                    'ADMIN',
+
+                  note:
+                    importNote,
+                })
+
+            if (logError) {
+              alert(logError.message)
+              return
+            }
+
+            window.location.reload()
+
+          } catch (err) {
+
+            console.error(err)
+            alert('Có lỗi xảy ra')
+
+          } finally {
+
+            setImportLoading(false)
+
+          }
+
+        }}
+        className="flex-1 rounded-xl bg-green-500 py-3 font-semibold text-black"
+      >
+        {importLoading
+          ? 'Đang nhập...'
+          : 'Nhập kho'}
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
+
+{exportModal && selectedProduct && (
+
+<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+
+  <div className="w-full max-w-lg rounded-2xl bg-slate-900 p-6">
+
+    <h2 className="mb-6 text-2xl font-bold">
+      Xuất kho nhanh
+    </h2>
+
+    <div className="space-y-4">
+
+      <div>
+        <label>Tên sản phẩm</label>
+        <input
+          disabled
+          value={selectedProduct.name}
+          className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+        />
+      </div>
+
+      <div>
+        <label>Màu sắc</label>
+        <input
+          disabled
+          value={selectedProduct.color || '-'}
+          className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+        />
+      </div>
+
+      <div>
+        <label>Giá vốn</label>
+        <input
+          disabled
+          value={
+            Number(
+              selectedProduct.cost_price || 0
+            ).toLocaleString('vi-VN') + ' đ'
+          }
+          className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+        />
+      </div>
+
+      <div>
+        <label>Tồn hiện tại</label>
+        <input
+          disabled
+          value={selectedProduct.stock_quantity}
+          className="mt-2 w-full rounded-lg bg-slate-800 p-3"
+        />
+      </div>
+
+      <div>
+        <label>Số lượng xuất</label>
+        <input
+          type="number"
+          value={exportQty}
+          onChange={(e) =>
+            setExportQty(e.target.value)
+          }
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
+        />
+      </div>
+
+      <div>
+        <label>Ghi chú</label>
+        <textarea
+          value={exportNote}
+          onChange={(e) =>
+            setExportNote(e.target.value)
+          }
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
+        />
+      </div>
+
+    </div>
+
+    <div className="mt-6 flex gap-3">
+
+      <button
+        onClick={() => {
+          setExportModal(false)
+          setExportQty('')
+          setExportNote('')
+        }}
+        className="flex-1 rounded-xl border border-slate-700 py-3"
+      >
+        Hủy
+      </button>
+
+      <button
+        disabled={exportLoading}
+        onClick={async () => {
+
+          const qty =
+            Number(exportQty)
+
+          if (
+            qty <= 0 ||
+            qty >
+              selectedProduct.stock_quantity
+          ) {
+            alert(
+              'Số lượng xuất không hợp lệ'
+            )
+            return
+          }
+
+          try {
+
+            setExportLoading(true)
+
+            const newStock =
+              selectedProduct.stock_quantity -
+              qty
+
+            const { error: updateError } =
+              await supabase
+                .from('products')
+                .update({
+                  stock_quantity:
+                    newStock,
+                })
+                .eq(
+                  'id',
+                  selectedProduct.id
+                )
+
+            if (updateError) {
+              alert(updateError.message)
+              return
+            }
+
+            const { error: logError } =
+              await supabase
+                .from(
+                  'inventory_transactions'
+                )
+                .insert({
+
+                  product_id:
+                    selectedProduct.id,
+
+                  sku:
+                    selectedProduct.sku,
+
+                  transaction_type:
+                    'EXPORT',
+
+                  quantity: qty,
+
+                  stock_after:
+                    newStock,
+
+                  reference_type:
+                    'SALE',
+
+                  reference_id:
+                    `PX${Date.now()}`,
+
+                  created_by:
+                    'ADMIN',
+
+                  note:
+                    exportNote,
+                })
+
+            if (logError) {
+              alert(logError.message)
+              return
+            }
+
+            window.location.reload()
+
+          } catch (err) {
+
+            console.error(err)
+            alert('Có lỗi xảy ra')
+
+          } finally {
+
+            setExportLoading(false)
+
+          }
+
+        }}
+        className="flex-1 rounded-xl bg-orange-500 py-3 font-semibold text-black"
+      >
+        {exportLoading
+          ? 'Đang xuất...'
+          : 'Xuất kho'}
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
 )}
 
 {viewModal && selectedProduct && (
