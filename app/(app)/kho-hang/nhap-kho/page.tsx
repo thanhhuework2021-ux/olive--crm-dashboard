@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic'
 export default async function NhapKhoPage() {
   const { data: products } =
     await supabase
-      .from('products')
-      .select('*')
-      .order('sku')
+  .from('products')
+  .select('*')
+  .eq('status', 'active')
+  .order('sku')
 
   return (
     <div className="p-6 text-white">

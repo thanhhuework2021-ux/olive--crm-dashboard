@@ -42,7 +42,7 @@ export default async function CategoriesPage() {
 
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-800">
+      <div className="overflow-visible rounded-xl border border-slate-800">
 
         <CategoriesTable
           categories={categories || []}

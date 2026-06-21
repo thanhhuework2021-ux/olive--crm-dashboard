@@ -419,7 +419,15 @@ backdrop-blur-sm
 
 <div className="mb-5"></div>
 
-<table className="w-full">
+<div
+  className="
+    min-h-[700px]
+    flex
+    flex-col
+    justify-between
+  "
+>
+  <table className="w-full">
   
         <thead className="bg-slate-900/60
 backdrop-blur-sm/60
@@ -583,29 +591,24 @@ backdrop-blur-sm">
     ⋮
   </button>
 
-  {openMenu === item.id && (
-    <div
-      className="
-        absolute
-        right-4
-        z-50
-        mt-2
-        w-44
-        overflow-hidden
-        rounded-xl
-        border
-        border-slate-700
-        bg-slate-900/60
-backdrop-blur-sm/60
-backdrop-blur-sm/60
-backdrop-blur-sm/60
-backdrop-blur-sm/60
-backdrop-blur-sm/60
-backdrop-blur-sm
-        shadow-xl
-      "
-    >
-
+ {openMenu === item.id && (
+  <div
+    className="
+      absolute
+      top-full
+      right-0
+      z-[9999]
+      mb-2
+      w-52
+      max-h-[300px]
+      overflow-y-auto
+      rounded-xl
+      border
+      border-slate-700
+      bg-slate-900
+      shadow-2xl
+    "
+>
        <button
   onClick={() => {
     setSelectedProduct(item)
@@ -736,7 +739,45 @@ backdrop-blur-sm
         🚫 Ẩn sản phẩm
       </button>
 
+      <button
+  onClick={async () => {
 
+    const confirmDelete =
+      confirm(
+        `Xóa vĩnh viễn ${item.name}?`
+      )
+
+    if (!confirmDelete) return
+
+    const { error } =
+      await supabase
+        .from('products')
+        .delete()
+        .eq('id', item.id)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    alert('Đã xóa sản phẩm')
+
+    window.location.reload()
+  }}
+  className="
+    block
+    w-full
+    px-4
+    py-2
+    text-left
+    text-red-500
+    hover:bg-red-500/10
+    border-t
+    border-slate-700
+  "
+>
+  🗑️ Xóa vĩnh viễn
+</button>
 
     </div>
   )}
@@ -785,21 +826,19 @@ shadow-cyan-500/40
     )
   )}
 
-  <button
-    disabled={
-      currentPage === totalPages
-    }
-    onClick={() =>
-      setCurrentPage(currentPage + 1)
-    }
-    className="rounded-full bg-slate-800 px-4 py-2 disabled:opacity-50"
-  >
-    →
-  </button>
+ <button
+  disabled={
+    currentPage === totalPages
+  }
+>
+  →
+</button>
 
 </div>
-      
-      {showDeleteModal && (
+
+</div>
+
+{showDeleteModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
 
     <div className="w-full max-w-md rounded-2xl border border-red-500/20 bg-slate-900/60
@@ -1309,6 +1348,8 @@ setSelectedProduct(null)
 </div>
 
 )}
+
+
 
 {viewModal && selectedProduct && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">

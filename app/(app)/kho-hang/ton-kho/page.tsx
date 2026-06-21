@@ -86,7 +86,7 @@ const { data: inventory } =
   totalPages
 )
 
-  const totalSku = inventory?.length || 0
+  const totalSku = count || 0
 
   const totalStock = (inventory || []).reduce(
     (acc, item) => acc + (item.stock_quantity || 0),
@@ -101,9 +101,11 @@ const { data: inventory } =
     0
   )
 
-  const lowStock = (inventory || []).filter(
-    (item) => (item.stock_quantity || 0) < 10
-  ).length
+ const lowStock = (inventory || []).filter(
+  (item) =>
+    (item.stock_quantity || 0) > 0 &&
+    (item.stock_quantity || 0) < 10
+).length
 
   return (
     <div className="space-y-6 p-6">

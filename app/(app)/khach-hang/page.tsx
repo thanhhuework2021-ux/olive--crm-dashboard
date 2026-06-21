@@ -42,6 +42,21 @@ const loadCustomers = async () => {
   setCustomers(data || [])
 }
 
+const ITEMS_PER_PAGE = 10
+
+const [currentPage, setCurrentPage] =
+  useState(1)
+
+const totalPages = Math.ceil(
+  customers.length / ITEMS_PER_PAGE
+)
+
+const paginatedCustomers =
+  customers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
   return (
     <div className="space-y-6">
 
@@ -184,6 +199,11 @@ const loadCustomers = async () => {
                   Hạng
                 </th>
 
+                <th className="p-4 text-left">
+                  Ngày Tạo
+                </th>  
+
+
               </tr>
 
             </thead>
@@ -194,7 +214,7 @@ const loadCustomers = async () => {
 
 <tr>
   <td
-    colSpan={6}
+    colSpan={20}
     className="h-40 text-center text-slate-400"
   >
     Chưa có khách hàng
@@ -203,7 +223,7 @@ const loadCustomers = async () => {
 
 ) : (
 
-customers.map((customer) => (
+paginatedCustomers.map((customer) => (
 
 <tr
   key={customer.id}
@@ -238,6 +258,14 @@ customers.map((customer) => (
       : 'Thường'}
   </td>
 
+  <td>
+  {customer.created_at
+    ? new Date(
+        customer.created_at
+      ).toLocaleDateString('vi-VN')
+    : '-'}
+</td>
+
 </tr>
 
 ))
@@ -246,9 +274,54 @@ customers.map((customer) => (
 
 </tbody>
 
-          </table>
+         </table>
 
-        </CardContent>
+<div className="flex items-center justify-center gap-2 border-t border-slate-800 p-4">
+
+  <button
+    disabled={currentPage === 1}
+    onClick={() =>
+      setCurrentPage(currentPage - 1)
+    }
+    className="rounded-full bg-slate-800 px-4 py-2 disabled:opacity-50"
+  >
+    ←
+  </button>
+
+  {Array.from(
+    { length: totalPages },
+    (_, i) => (
+      <button
+        key={i}
+        onClick={() =>
+          setCurrentPage(i + 1)
+        }
+        className={`rounded-full px-4 py-2 ${
+          currentPage === i + 1
+            ? 'bg-cyan-500 text-black'
+            : 'bg-slate-800'
+        }`}
+      >
+        {i + 1}
+      </button>
+    )
+  )}
+
+  <button
+    disabled={
+      currentPage === totalPages
+    }
+    onClick={() =>
+      setCurrentPage(currentPage + 1)
+    }
+    className="rounded-full bg-slate-800 px-4 py-2 disabled:opacity-50"
+  >
+    →
+  </button>
+
+</div>
+
+</CardContent>
       </Card>
 
 {openCustomer && (
