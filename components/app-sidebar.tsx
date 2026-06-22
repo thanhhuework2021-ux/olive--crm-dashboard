@@ -39,15 +39,34 @@ export function AppSidebar() {
   const [userEmail, setUserEmail] = useState('')
 
 useEffect(() => {
-  const loadUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
 
-    setUserEmail(user?.email || '')
+  const loadUser = async () => {
+
+    try {
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      setUserEmail(
+        user?.email || ''
+      )
+
+    } catch (err) {
+
+      console.error(
+        'SUPABASE AUTH ERROR',
+        err
+      )
+
+      setUserEmail('')
+
+    }
+
   }
 
   loadUser()
+
 }, [])
 
   return (

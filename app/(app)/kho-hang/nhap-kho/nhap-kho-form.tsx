@@ -367,28 +367,14 @@ return (
 
 <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
 
-  {[
-    ...new Map(
-      products
-        .filter((p) =>
-          p.name
-            ?.toLowerCase()
-            .includes(
-              search.toLowerCase()
-            )
-        )
-        .map((p) => [
-          p.name,
-          p,
-        ])
-    ).values(),
-
-  ]
-.slice(
-  0,
-  showAll ? 999 : 8
-)
-.map((item) => (
+  {filteredProducts
+    .slice(
+      0,
+      showAll
+        ? filteredProducts.length
+        : 8
+    )
+    .map((item) => (
 
     <button
   key={item.name}
