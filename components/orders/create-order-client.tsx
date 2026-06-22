@@ -63,6 +63,15 @@ interface CartLine {
 
 export function CreateOrderClient() {
 
+  const [paymentMethod, setPaymentMethod] =
+  useState('cod')
+
+const [shippingProvider, setShippingProvider] =
+  useState('GHN')
+
+const [paidAmount, setPaidAmount] =
+  useState(0)
+
   const [search, setSearch] = useState('')
   const [selectedProduct, setSelectedProduct] =
     useState('all')
@@ -72,18 +81,66 @@ export function CreateOrderClient() {
   const [customersData, setCustomersData] = useState<any[]>([])
   const [customer, setCustomer] = useState<any>(null)
   const [customerSearch, setCustomerSearch] = useState('')
-  const [customerName, setCustomerName] =
+  const [customerCode, setCustomerCode] =
+  useState('')
 
-    useState('')
+  
+  
 
-  const [customerPhone, setCustomerPhone] =
-    useState('')
+ const [customerName, setCustomerName] =
+  useState('')
 
-  const [customerAddress, setCustomerAddress] =
-    useState('')
+const [customerPhone, setCustomerPhone] =
+  useState('')
 
-  const [shippingFee, setShippingFee] =
-    useState(30000)
+const [customerAddress, setCustomerAddress] =
+  useState('')
+
+
+useEffect(() => {
+
+  if (
+    !customerName ||
+    customerPhone.length < 4
+  ) {
+    setCustomerCode('')
+    return
+  }
+
+  const lastName =
+    customerName
+      .trim()
+      .split(' ')
+      .pop()
+      ?.substring(0, 2)
+      .toUpperCase() || 'KH'
+
+  const last4Phone =
+    customerPhone
+      .replace(/\D/g, '')
+      .slice(-4)
+
+  const now = new Date()
+
+  const dd =
+    String(now.getDate())
+      .padStart(2, '0')
+
+  const mm =
+    String(now.getMonth() + 1)
+      .padStart(2, '0')
+
+  setCustomerCode(
+    `KH-${lastName}-${last4Phone}-${dd}${mm}`
+  )
+
+}, [
+  customerName,
+  customerPhone,
+])
+
+const [shippingFee, setShippingFee] =
+  useState(30000)
 
   const [discountAmount, setDiscountAmount] =
     useState(0)
@@ -235,6 +292,53 @@ export function CreateOrderClient() {
       discountAmount +
       shippingFee
 
+    const findCustomer = async (
+  keyword: string
+) => {
+
+  if (!keyword?.trim()) return
+
+  const last4 =
+    keyword.replace(/\D/g, '').slice(-4)
+
+  console.log(
+    'SEARCH CUSTOMER:',
+    keyword,
+    last4
+  )
+
+  const { data, error } =
+    await supabase
+      .from('customers')
+      .select('*')
+      .or(
+        `customer_display_code.ilike.%${keyword}%,phone.ilike.%${last4}%`
+      )
+      .limit(1)
+      .maybeSingle()
+
+  console.log('CUSTOMER', data)
+  console.log('ERROR', error)
+
+  if (!data) return
+
+  setCustomerCode(
+    data.customer_display_code || ''
+  )
+
+  setCustomerName(
+    data.full_name || ''
+  )
+
+  setCustomerPhone(
+    data.phone || ''
+  )
+
+  setCustomerAddress(
+    data.address || ''
+  )
+}
+
 
     const createOrder = async () => {
 
@@ -261,7 +365,35 @@ export function CreateOrderClient() {
         customerId =
           existingCustomer.id
       } else {
+       
+        const lastName =
+  customerName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .split(' ')
+    .pop()
+    ?.substring(0, 2)
+    .toUpperCase() || 'KH'
 
+const last4Phone =
+  customerPhone
+    .replace(/\D/g, '')
+    .slice(-4)
+
+const now = new Date()
+
+const dd =
+  String(now.getDate())
+    .padStart(2, '0')
+
+const mm =
+  String(now.getMonth() + 1)
+    .padStart(2, '0')
+
+const customerCode =
+  `KH-${lastName}-${last4Phone}-${dd}${mm}`
+        
         const {
           data: newCustomer,
           error: customerError,
@@ -269,12 +401,20 @@ export function CreateOrderClient() {
           .from('customers')
           .insert([
             {
-              full_name: customerName,
-              phone: customerPhone,
-              address: customerAddress,
-              total_orders: 1,
-              total_spent: total,
-            },
+  customer_code: customerCode,
+
+  customer_display_code: customerCode,
+
+  full_name: customerName,
+
+  phone: customerPhone,
+
+  address: customerAddress,
+
+  total_orders: 1,
+
+  total_spent: total,
+},
           ])
           .select()
           .single()
@@ -295,19 +435,7 @@ export function CreateOrderClient() {
         customerId = newCustomer.id
       }
 
-      if (!existingCustomer) {
-        await supabase
-          .from('customers')
-          .insert([
-            {
-              full_name: customerName,
-              phone: customerPhone,
-              address: customerAddress,
-              total_orders: 1,
-              total_spent: total,
-            },
-          ])
-      }
+    
 
       const {
         data: orderData,
@@ -351,16 +479,28 @@ export function CreateOrderClient() {
           .from('order_items')
           .insert(
             cart.map((item) => ({
-              customer_name: customerName,
-              order_id: orderData.id,
-              product_id: item.product.id,
-              sku: item.product.sku,
-              product_name: item.product.name,
-              quantity: item.quantity,
-              sale_price: item.price,
-              subtotal:
-                item.price * item.quantity,
-            }))
+  customer_name: customerName,
+  order_id: orderData.id,
+
+  product_id: item.product.id,
+
+  sku: item.product.sku,
+
+  product_name:
+    item.product.name,
+
+  color:
+    item.product.color,
+
+  quantity:
+    item.quantity,
+
+  sale_price:
+    item.price,
+
+  subtotal:
+    item.price * item.quantity,
+}))
           )
 
       console.log('itemError', itemError)
@@ -691,7 +831,54 @@ overflow-auto space-y-4">
   Thông Tin Khách hàng
 </h2>
 
-              <div className="relative">
+  <div className="relative">
+
+  <input
+    placeholder="Mã KH hoặc 4 số cuối SĐT"
+    value={customerCode}
+    onChange={(e) =>
+      setCustomerCode(e.target.value)
+    }
+    onBlur={() =>
+      findCustomer(customerCode)
+    }
+    className="
+      w-full
+      rounded-2xl
+      border
+      border-cyan-700
+      bg-slate-900
+      py-4
+      px-5
+      text-cyan-400
+      font-semibold
+      placeholder:text-cyan-500/70
+    "
+  />
+
+</div>
+
+{customerCode && (
+
+  <div
+    className="
+      mt-2
+      inline-flex
+      rounded-full
+      bg-cyan-500/20
+      px-3
+      py-1
+      text-xs
+      font-semibold
+      text-cyan-400
+    "
+  >
+    {customerCode}
+  </div>
+
+)}
+
+<div className="relative mt-3">
 
   <User
     size={18}
@@ -839,29 +1026,101 @@ overflow-auto space-y-4">
 
               <div className="mt-4">
 
-                <label>
-                  Phí ship
-                </label>
+  <label>
+    Phí ship
+  </label>
 
-                <div className="relative">
+  <div className="relative">
 
-  <Truck
-    size={18}
-    className="
-      absolute
-      left-4
-      top-1/2
-      -translate-y-1/2
-      text-slate-400
-    "
-  />
+    <Truck
+      size={18}
+      className="
+        absolute
+        left-4
+        top-1/2
+        -translate-y-1/2
+        text-slate-400
+      "
+    />
 
-  <input
-    type="number"
-    value={shippingFee}
+    <input
+      type="number"
+      value={shippingFee}
+      onChange={(e) =>
+        setShippingFee(
+          Number(e.target.value)
+        )
+      }
+      className="
+        mt-2
+        w-full
+        rounded-2xl
+        border
+        border-slate-700
+        bg-slate-900
+        py-4
+        pl-12
+        pr-4
+      "
+    />
+
+  </div>
+
+</div>
+
+<div className="mt-4">
+
+  <label>
+    Phương thức thanh toán
+  </label>
+
+  <select
+  value={paymentMethod}
+  onChange={(e) =>
+    setPaymentMethod(
+      e.target.value
+    )
+  }
+  className="
+    mt-2
+    w-full
+    rounded-2xl
+    border
+    border-slate-700
+    bg-slate-900
+    p-4
+  "
+>
+  <option value="cash">
+    Tiền mặt
+  </option>
+
+  <option value="bank">
+    Chuyển khoản
+  </option>
+
+  <option value="cod">
+    COD
+  </option>
+
+  <option value="momo">
+    MoMo
+  </option>
+</select>
+
+</div>
+
+<div className="mt-4">
+
+  <label>
+    Đơn vị vận chuyển
+  </label>
+
+  <select
+    value={shippingProvider}
     onChange={(e) =>
-      setShippingFee(
-        Number(e.target.value)
+      setShippingProvider(
+        e.target.value
       )
     }
     className="
@@ -871,15 +1130,62 @@ overflow-auto space-y-4">
       border
       border-slate-700
       bg-slate-900
-      py-4
-      pl-12
-      pr-4
+      p-4
+    "
+  >
+
+    <option value="GHN">
+      GHN
+    </option>
+
+    <option value="GHTK">
+      GHTK
+    </option>
+
+    <option value="J&T">
+      J&T
+    </option>
+
+    <option value="Viettel">
+      Viettel Post
+    </option>
+
+    <option value="SELF">
+      Khách tự lấy
+    </option>
+
+  </select>
+
+</div>
+
+<div className="mt-4">
+
+  <label>
+    Đã thu trước
+  </label>
+
+  <input
+    type="number"
+    value={paidAmount}
+    onChange={(e) =>
+      setPaidAmount(
+        Number(
+          e.target.value
+        )
+      )
+    }
+    className="
+      mt-2
+      w-full
+      rounded-2xl
+      border
+      border-slate-700
+      bg-slate-900
+      p-4
     "
   />
 
 </div>
-
-              </div>
 
               <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800">
 
@@ -1089,7 +1395,7 @@ text-black">
 
               {/* HEADER */}
 
-              <div className="pt-6 text-center">
+              <div className="pt-2 text-center">
 
                 <h1 className="text-2xl font-bold tracking-[4px]">
                   OLIVE LIVING
@@ -1121,174 +1427,209 @@ text-black">
 
               </div>
 
+            
+
               {/* ORDER INFO */}
 
-              <div className="mt-4 flex justify-between text-xs">
+<div className="mt-4 flex justify-between border-b pb-3 text-xs">
 
-                <div>
-                  <strong>Mã đơn:</strong> DH{Date.now()}
-                </div>
+  <div>
+    <strong>Mã đơn:</strong> DH{Date.now()}
+  </div>
 
-                <div>
-                  <strong>Ngày:</strong>{' '}
-                  {new Date().toLocaleDateString('vi-VN')}
-                </div>
+  <div>
+    <strong>Ngày:</strong>{' '}
+    {new Date().toLocaleDateString('vi-VN')}
+  </div>
 
-              </div>
+</div>
 
-              {/* CUSTOMER */}
+{/* CUSTOMER INFO */}
 
-              <div className="mt-4 rounded-lg border p-3 text-xs">
+<div className="mt-3 rounded border p-2 text-[11px] leading-5">
 
-                <div className="mb-2 font-semibold">
-                  THÔNG TIN KHÁCH HÀNG
-                </div>
+  <div className="mb-1 font-bold border-b pb-1">
+    THÔNG TIN ĐƠN HÀNG
+  </div>
 
-                <div>
-                  Tên khách hàng: {customerName}
-                </div>
+  <div className="grid grid-cols-2 gap-x-6">
 
-                <div>
-                  Số điện thoại: {customerPhone}
-                </div>
+    <div>
+      <strong>Mã KH:</strong> {customerCode}
+    </div>
 
-                <div>
-                  Địa chỉ: {customerAddress}
-                </div>
+    <div>
+      <strong>ĐVVC:</strong> {shippingProvider}
+    </div>
 
-              </div>
+    <div>
+      <strong>Khách:</strong> {customerName}
+    </div>
 
-              {/* PRODUCTS */}
+    <div>
+      <strong>Thanh toán:</strong> {paymentMethod}
+    </div>
 
-              <table className="mt-4 w-full border-collapse text-xs">
+    <div>
+      <strong>SĐT:</strong> {customerPhone}
+    </div>
 
-                <thead>
+    <div>
+      <strong>Đã thu:</strong>{' '}
+      {paidAmount.toLocaleString('vi-VN')} đ
+    </div>
 
-                  <tr className="border-b bg-gray-100">
+  </div>
 
-                    <th className="px-2 py-2 text-left">
-                      SKU
-                    </th>
+  <div className="mt-1">
+    <strong>Địa chỉ:</strong> {customerAddress}
+  </div>
 
-                    <th className="px-2 py-2 text-left">
-                      Sản phẩm
-                    </th>
+</div>
 
-                    <th className="px-2 py-2 text-center">
-                      Màu
-                    </th>
+{/* PRODUCTS */}
 
-                    <th className="px-2 py-2 text-center">
-                      SL
-                    </th>
+<table className="mt-3 w-full border-collapse text-[11px]">
 
-                    <th className="px-2 py-2 text-right">
-                      Đơn giá
-                    </th>
+  <thead>
 
-                    <th className="px-2 py-2 text-right">
-                      Thành tiền
-                    </th>
+    <tr className="border-b">
 
-                  </tr>
+      <th className="py-1 text-left">
+        SKU
+      </th>
 
-                </thead>
+      <th className="py-1 text-left">
+        Sản phẩm
+      </th>
 
-                <tbody>
+      <th className="py-1 text-center">
+        Màu
+      </th>
 
-                  {cart.map((item) => (
+      <th className="py-1 text-center">
+        SL
+      </th>
 
-                    <tr
-                      key={item.product.id}
-                      className="border-b"
-                    >
+      <th className="py-1 text-right">
+        Đơn giá
+      </th>
 
-                      <td className="px-2 py-2">
-                        {item.product.sku}
-                      </td>
+      <th className="py-1 text-right">
+        Thành tiền
+      </th>
 
-                      <td className="px-2 py-2">
-                        {item.product.name}
-                      </td>
+    </tr>
 
-                      <td className="px-2 py-2 text-center">
-                        {item.product.color || '-'}
-                      </td>
+  </thead>
 
-                      <td className="px-2 py-2 text-center">
-                        {item.quantity}
-                      </td>
+  <tbody>
 
-                      <td className="px-2 py-2 text-right">
-                        {item.price.toLocaleString('vi-VN')} đ
-                      </td>
+    {cart.map((item) => (
 
-                      <td className="px-2 py-2 text-right font-semibold">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')} đ
-                      </td>
+      <tr
+        key={item.product.id}
+        className="border-b"
+      >
 
-                    </tr>
+        <td className="py-1">
+          {item.product.sku}
+        </td>
 
-                  ))}
+        <td className="py-1">
+          {item.product.name}
+        </td>
 
-                </tbody>
+        <td className="py-1 text-center">
+          {item.product.color || '-'}
+        </td>
 
-              </table>
+        <td className="py-1 text-center">
+          {item.quantity}
+        </td>
 
-              {/* TOTAL */}
+        <td className="py-1 text-right">
+          {item.price.toLocaleString('vi-VN')} đ
+        </td>
 
-              <div className="mt-4 ml-auto w-[280px] text-sm">
+        <td className="py-1 text-right font-medium">
+          {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+        </td>
 
-                <div className="flex justify-between">
+      </tr>
 
-                  <span>Tạm tính</span>
+    ))}
 
-                  <span>
-                    {subtotal.toLocaleString('vi-VN')} đ
-                  </span>
+  </tbody>
 
-                </div>
+</table>
 
-                <div className="mt-1 flex justify-between">
+{/* TOTAL */}
 
-                  <span>Giảm giá</span>
+<div className="mt-3 ml-auto w-[280px] border rounded p-3 text-[12px]">
 
-                  <span>
-                    {discountAmount.toLocaleString('vi-VN')} đ
-                  </span>
+  <div className="flex justify-between">
+    <span>Tạm tính</span>
+    <span>
+      {subtotal.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
 
-                </div>
+  <div className="flex justify-between">
+    <span>Giảm giá</span>
+    <span>
+      {discountAmount.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
 
-                <div className="mt-1 flex justify-between">
+  <div className="flex justify-between">
+    <span>Phí ship</span>
+    <span>
+      {shippingFee.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
 
-                  <span>Phí ship</span>
+  <div className="flex justify-between">
+    <span>Đã thu</span>
+    <span>
+      {paidAmount.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
 
-                  <span>
-                    {shippingFee.toLocaleString('vi-VN')} đ
-                  </span>
+  <div className="mt-2 border-t pt-2">
 
-                </div>
+    <div className="flex justify-between font-bold text-[15px] text-green-600">
 
-                <div className="mt-2 border-t pt-2">
+      <span>
+        THÀNH TIỀN
+      </span>
 
-                  <div className="flex justify-between text-lg font-bold">
+      <span>
+        {total.toLocaleString('vi-VN')} đ
+      </span>
 
-                    <span>THÀNH TIỀN</span>
+    </div>
 
-                    <span className="text-green-600">
+    <div className="mt-1 flex justify-between font-bold text-[15px] text-red-600">
 
-                      {total.toLocaleString('vi-VN')} đ
+      <span>
+        CÒN THU
+      </span>
 
-                    </span>
+      <span>
+        {Math.max(
+          total - paidAmount,
+          0
+        ).toLocaleString('vi-VN')} đ
+      </span>
 
-                  </div>
+    </div>
 
-                </div>
+  </div>
 
-              </div>
+</div>
 
-              {/* POLICY */}
-
+            
               <div className="mt-6 rounded-lg border bg-gray-50 p-4 text-[11px] leading-5">
 
                 <div className="mb-3 text-center font-bold">

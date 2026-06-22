@@ -29,9 +29,7 @@ import {
 } from '@/components/ui/table'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import {
-  OrderStatusBadge,
-} from '@/components/status-badges'
+
 import { OrderDetailSheet } from '@/components/orders/order-detail-sheet'
 
 import {
@@ -43,10 +41,23 @@ import { supabase } from '@/lib/supabase'
 import { useEffect } from 'react'
 import { formatVND, formatDateTime } from '@/lib/format'
 
+
 export function OrdersListClient() {
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<string>('all')
-  const [selected, setSelected] = useState<any>(null)
+  
+const [query, setQuery] = useState('')
+const [status, setStatus] = useState<string>('all')
+
+const [fromDate, setFromDate] =
+  useState('')
+
+const [toDate, setToDate] =
+  useState('')
+
+const [paymentFilter, setPaymentFilter] =
+  useState('all')
+
+const [selected, setSelected] =
+  useState<any>(null)
 
   const [orders, setOrders] =
   useState<any[]>([])
@@ -54,6 +65,11 @@ export function OrdersListClient() {
   useEffect(() => {
   loadOrders()
 }, [])
+
+const [currentPage, setCurrentPage] =
+  useState(1)
+
+const ITEMS_PER_PAGE = 10
 
 const loadOrders = async () => {
 
@@ -64,7 +80,8 @@ const loadOrders = async () => {
   *,
   customers (
     full_name,
-    phone
+    phone,
+    address
   ),
   order_items (
     *
@@ -85,25 +102,149 @@ console.log(data?.[0])
 }
 
   const filtered = useMemo(() => {
+
+
   return orders.filter((o) => {
-    if (status !== 'all' && o.status !== status) return false
+
+    if (
+      status !== 'all' &&
+      o.status !== status
+    ) {
+      return false
+    }
+
+    if (
+      paymentFilter !== 'all' &&
+      o.payment_status !== paymentFilter
+    ) {
+      return false
+    }
 
     if (
       query &&
-      !String(o.order_code || '')
-        .toLowerCase()
-        .includes(query.toLowerCase())
-    )
+      !(
+        String(
+          o.order_code || ''
+        )
+          .toLowerCase()
+          .includes(
+            query.toLowerCase()
+          ) ||
+
+        String(
+          o.customers?.full_name || ''
+        )
+          .toLowerCase()
+          .includes(
+            query.toLowerCase()
+          )
+      )
+    ) {
       return false
+    }
+
+    if (fromDate) {
+
+      const orderDate =
+        new Date(o.created_at)
+
+      const startDate =
+        new Date(fromDate)
+
+      if (
+        orderDate < startDate
+      ) {
+        return false
+      }
+
+    }
+
+    if (toDate) {
+
+      const orderDate =
+        new Date(o.created_at)
+
+      const endDate =
+        new Date(toDate)
+
+      endDate.setHours(
+        23,
+        59,
+        59,
+        999
+      )
+
+      if (
+        orderDate > endDate
+      ) {
+        return false
+      }
+
+    }
 
     return true
-  })
-}, [orders, query, status])
 
-  const openOrder = (o: Order) => {
+  })
+
+}, [
+  orders,
+  query,
+  status,
+  paymentFilter,
+  fromDate,
+  toDate,
+])
+
+  const totalPages = Math.ceil(
+  filtered.length /
+    ITEMS_PER_PAGE
+)
+
+const paginatedOrders =
+  filtered.slice(
+    (currentPage - 1) *
+      ITEMS_PER_PAGE,
+    currentPage *
+      ITEMS_PER_PAGE
+  )
+
+  const openOrder = (o: any) => {
     setSelected(o)
     setOpen(true)
   }
+
+  const totalRevenue =
+  filtered.reduce(
+    (sum, o) =>
+      sum + Number(o.total_amount || 0),
+    0
+  )
+
+const paidRevenue =
+  filtered
+    .filter(
+      (o) =>
+        o.payment_status === 'paid'
+    )
+    .reduce(
+      (sum, o) =>
+        sum +
+        Number(o.total_amount || 0),
+      0
+    )
+
+const unpaidRevenue =
+  filtered
+    .filter(
+      (o) =>
+        o.payment_status !== 'paid'
+    )
+    .reduce(
+      (sum, o) =>
+        sum +
+        Number(o.total_amount || 0),
+      0
+    )
 
   return (
     <PageShell title="Danh sách đơn hàng">
@@ -112,6 +253,8 @@ console.log(data?.[0])
         description={`Quản lý toàn bộ ${orders.length} đơn hàng của doanh nghiệp`}
         actions={
           <>
+
+          
             <Button variant="outline">
               <Download data-icon="inline-start" /> Xuất Excel
             </Button>
@@ -127,6 +270,85 @@ console.log(data?.[0])
         }
       />
 
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+
+  <Card>
+    <CardContent className="p-5">
+      <p className="text-sm text-slate-400">
+        Tổng đơn
+      </p>
+      <h2 className="mt-2 text-3xl font-bold">
+        {filtered.length}
+      </h2>
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardContent className="p-5">
+      <p className="text-sm text-slate-400">
+        Tổng giá trị
+      </p>
+      <h2 className="mt-2 text-3xl font-bold">
+        {formatVND(
+          filtered.reduce(
+            (sum, o) =>
+              sum + Number(o.total_amount || 0),
+            0
+          )
+        )}
+      </h2>
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardContent className="p-5">
+      <p className="text-sm text-green-400">
+        Đã thu
+      </p>
+      <h2 className="mt-2 text-3xl font-bold text-green-400">
+        {formatVND(
+          filtered
+            .filter(
+              (o) =>
+                o.payment_status === 'paid'
+            )
+            .reduce(
+              (sum, o) =>
+                sum +
+                Number(o.total_amount || 0),
+              0
+            )
+        )}
+      </h2>
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardContent className="p-5">
+      <p className="text-sm text-red-400">
+        Công nợ
+      </p>
+      <h2 className="mt-2 text-3xl font-bold text-red-400">
+        {formatVND(
+          filtered
+            .filter(
+              (o) =>
+                o.payment_status ===
+                'unpaid'
+            )
+            .reduce(
+              (sum, o) =>
+                sum +
+                Number(o.total_amount || 0),
+              0
+            )
+        )}
+      </h2>
+    </CardContent>
+  </Card>
+
+</div>
+
       <FadeIn>
         <Card className="mb-4">
           <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
@@ -139,8 +361,93 @@ console.log(data?.[0])
                 className="pl-9"
               />
             </div>
+            
+           <div className="relative">
+
+  <span className="absolute left-3 top-1/2 -translate-y-1/2">
+    📅
+  </span>
+
+  <input
+  type="date"
+  value={fromDate}
+  onChange={(e) =>
+    setFromDate(e.target.value)
+  }
+  onClick={(e) => {
+    e.currentTarget.showPicker?.()
+  }}
+    
+    className="
+      h-10
+      w-[170px]
+      rounded-lg
+      border
+      border-slate-700
+      bg-slate-900
+      pl-10
+      pr-3
+    "
+  />
+
+</div>
+
+<div className="relative">
+
+  <span className="absolute left-3 top-1/2 -translate-y-1/2">
+    📅
+  </span>
+
+  <input
+    type="date"
+    value={toDate}
+    onChange={(e) =>
+      setToDate(e.target.value)
+    }
+    className="
+      h-10
+      w-[170px]
+      rounded-lg
+      border
+      border-slate-700
+      bg-slate-900
+      pl-10
+      pr-3
+    "
+  />
+
+</div>
+
+
           <div className="flex flex-wrap gap-2">
   <Select value={status} onValueChange={setStatus}>
+
+
+    <Select
+  value={paymentFilter}
+  onValueChange={
+    setPaymentFilter
+  }
+>
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="Thanh toán" />
+  </SelectTrigger>
+
+  <SelectContent>
+    <SelectItem value="all">
+      Tất cả thanh toán
+    </SelectItem>
+
+    <SelectItem value="paid">
+      Đã thanh toán
+    </SelectItem>
+
+    <SelectItem value="unpaid">
+      Chưa thanh toán
+    </SelectItem>
+  </SelectContent>
+</Select>
+
     <SelectTrigger className="w-[160px]">
       <Filter className="size-3.5 text-muted-foreground" />
       <SelectValue placeholder="Trạng thái" />
@@ -181,6 +488,9 @@ console.log(data?.[0])
                 <TableRow>
                   <TableHead>Mã đơn</TableHead>
                   <TableHead>Khách hàng</TableHead>
+                  <TableHead>
+  SP
+</TableHead>
                   <TableHead className="text-right">
                     Tổng tiền
                   </TableHead>
@@ -194,14 +504,14 @@ console.log(data?.[0])
                     Ngày tạo
                   </TableHead>
                   <TableHead>
-                    Người tạo
-                  </TableHead>
+  Hóa đơn
+</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
 
-                {filtered.map((o) => (
+                {paginatedOrders.map((o) => (
 
                   <TableRow
                     key={o.id}
@@ -220,51 +530,203 @@ console.log(data?.[0])
                         'Khách lẻ'}
                     </TableCell>
 
+                    <TableCell>
+  {o.order_items?.length || 0} SP
+</TableCell>
+
                     <TableCell className="text-right font-semibold">
                       {formatVND(
                         o.total_amount
                       )}
                     </TableCell>
 
-                    <TableCell
-                      onClick={(e) =>
-                        e.stopPropagation()
-                      }
-                    >
-                      <Switch
-                        checked={
-                          o.payment_status ===
-                          'paid'
-                        }
-                        onCheckedChange={async (
-                          checked
-                        ) => {
-                          const newStatus =
-                            checked
-                              ? 'paid'
-                              : 'unpaid'
-
-                          await supabase
-                            .from('orders')
-                            .update({
-                              payment_status:
-                                newStatus,
-                              status: checked
-                                ? 'completed'
-                                : 'pending',
-                            })
-                            .eq('id', o.id)
-
-                          loadOrders()
-                        }}
-                      />
-                    </TableCell>
-
                     <TableCell>
-                      <OrderStatusBadge
-                        status={o.status}
-                      />
-                    </TableCell>
+
+  <div className="space-y-1">
+
+    <div className="text-xs text-green-500 font-medium">
+      <div className="space-y-1">
+
+  <div className="text-xs font-medium text-green-500">
+    Thu:
+    {' '}
+    {formatVND(
+      Number(
+        o.paid_amount || 0
+      )
+    )}
+  </div>
+
+  <div className="text-xs font-medium text-red-500">
+    Nợ:
+    {' '}
+    {formatVND(
+      Number(
+        o.remaining_amount ||
+        0
+      )
+    )}
+  </div>
+
+</div>
+    </div>
+
+  </div>
+
+</TableCell>
+
+                    <TableCell
+  onClick={(e) =>
+    e.stopPropagation()
+  }
+>
+
+<Select
+  value={o.status}
+  onValueChange={async (
+    value
+  ) => {
+
+    if (
+      value === 'cancelled' &&
+      o.status !== 'cancelled'
+    ) {
+
+      for (const item of (
+        o.order_items || []
+      )) {
+
+        const {
+          data: product,
+        } = await supabase
+          .from('products')
+          .select('*')
+          .eq(
+            'id',
+            item.product_id
+          )
+          .single()
+
+        if (!product)
+          continue
+
+        await supabase
+          .from('products')
+          .update({
+            stock_quantity:
+              product.stock_quantity +
+              item.quantity,
+          })
+          .eq(
+            'id',
+            item.product_id
+          )
+
+        await supabase
+          .from(
+            'inventory_transactions'
+          )
+          .insert({
+            product_id:
+              item.product_id,
+            sku: item.sku,
+            transaction_type:
+              'RETURN',
+            quantity:
+              item.quantity,
+            stock_after:
+              product.stock_quantity +
+              item.quantity,
+            reference_type:
+              'ORDER_CANCEL',
+            reference_id:
+              o.order_code,
+            created_by:
+              'ADMIN',
+            note:
+              `Hủy đơn ${o.order_code}`,
+          })
+      }
+    }
+
+    await supabase
+      .from('orders')
+      .update({
+        status: value,
+      })
+      .eq('id', o.id)
+
+    loadOrders()
+  }}
+>
+
+  <SelectTrigger
+    className="
+      h-8
+      w-[150px]
+      border-0
+      bg-slate-800
+    "
+  >
+
+    <span className="text-sm font-medium">
+
+  {o.status === 'pending' &&
+    '🟡 Chờ xác nhận'}
+
+  {o.status === 'processing' &&
+    '🔵 Đang xử lý'}
+
+  {o.status === 'shipping' &&
+    '🟣 Đang giao'}
+
+  {o.status === 'completed' &&
+    '🟢 Hoàn thành'}
+
+  {o.status === 'cancelled' &&
+    '🔴 Đã hủy'}
+
+</span>
+
+  </SelectTrigger>
+
+  <SelectContent>
+
+    <SelectItem
+      value="pending"
+    >
+      🟡 Chờ xác nhận
+    </SelectItem>
+
+    <SelectItem
+      value="processing"
+    >
+      🔵 Đang xử lý
+    </SelectItem>
+
+    <SelectItem
+      value="shipping"
+    >
+      🟣 Đang giao
+    </SelectItem>
+
+    <SelectItem
+      value="completed"
+    >
+      🟢 Hoàn thành
+    </SelectItem>
+
+    <SelectItem
+      value="cancelled"
+    >
+      🔴 Đã hủy
+    </SelectItem>
+
+  </SelectContent>
+
+</Select>
+
+</TableCell>
 
                     <TableCell>
                       {formatDateTime(
@@ -272,9 +734,20 @@ console.log(data?.[0])
                       )}
                     </TableCell>
 
-                    <TableCell>
-                      {o.staff}
-                    </TableCell>
+                   <TableCell>
+  <button
+  className="
+    flex
+    items-center
+    gap-2
+    text-cyan-400
+    hover:text-cyan-300
+  "
+>
+  👁
+  Xem
+</button>
+</TableCell>
 
                   </TableRow>
 
@@ -283,6 +756,60 @@ console.log(data?.[0])
               </TableBody>
 
             </Table>
+            <div className="flex items-center justify-center gap-2 border-t p-4">
+
+  <Button
+    variant="outline"
+    disabled={currentPage === 1}
+    onClick={() =>
+      setCurrentPage(
+        currentPage - 1
+      )
+    }
+  >
+    ←
+  </Button>
+
+  {Array.from(
+    {
+      length: totalPages,
+    },
+    (_, i) => (
+      <Button
+        key={i}
+        variant={
+          currentPage ===
+          i + 1
+            ? 'default'
+            : 'outline'
+        }
+        onClick={() =>
+          setCurrentPage(
+            i + 1
+          )
+        }
+      >
+        {i + 1}
+      </Button>
+    )
+  )}
+
+  <Button
+    variant="outline"
+    disabled={
+      currentPage ===
+      totalPages
+    }
+    onClick={() =>
+      setCurrentPage(
+        currentPage + 1
+      )
+    }
+  >
+    →
+  </Button>
+
+</div>
 
           
             {filtered.length === 0 && (

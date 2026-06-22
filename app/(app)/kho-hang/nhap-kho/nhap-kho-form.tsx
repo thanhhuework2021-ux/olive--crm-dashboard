@@ -377,26 +377,16 @@ return (
     .map((item) => (
 
     <button
-  key={item.name}
+  key={item.id}
   type="button"
   onClick={() => {
     setSelectedName(item.name)
+    setSelectedColor(
+      item.color || ''
+    )
   }}
-  className={`
-    flex
-    items-center
-    gap-3
-    rounded-xl
-    border
-    p-3
-    transition
-    ${
-      selectedName === item.name
-        ? 'border-cyan-500 bg-cyan-500/10'
-        : 'border-slate-700 bg-slate-900 hover:border-cyan-500'
-    }
-  `}
 >
+    
 
   <img
     src={

@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
+import { supabase } from '@/lib/supabase'
 import {
   Sheet,
   SheetContent,
@@ -35,6 +38,8 @@ import {
   Clock,
 } from 'lucide-react'
 
+import InvoicePrint from './invoice-print'
+
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-center justify-between text-sm">
@@ -55,7 +60,183 @@ export function OrderDetailSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  if (!order) return null
+
+  const [paymentAmount, setPaymentAmount] =
+    useState('')
+
+  const [
+    paymentHistory,
+    setPaymentHistory,
+  ] = useState<any[]>([])
+
+
+
+useEffect(() => {
+
+  if (!order?.id) {
+    setPaymentHistory([])
+    return
+  }
+
+  loadPaymentHistory()
+
+}, [order?.id])
+
+const loadPaymentHistory =
+  async () => {
+
+    const { data } =
+      await supabase
+        .from(
+          'payment_transactions'
+        )
+        .select('*')
+        .eq(
+          'order_id',
+          order?.id
+        )
+        .order(
+          'created_at',
+          {
+            ascending: false,
+          }
+        )
+
+    setPaymentHistory(
+      data || []
+    )
+  }
+
+  
+
+ 
+
+const handleCollectPayment =
+  async () => {
+
+    const amount =
+      Number(paymentAmount)
+
+    if (
+      !amount ||
+      amount <= 0
+    )
+      return
+
+    const paid =
+      Number(
+        order.paid_amount || 0
+      ) + amount
+
+    const remaining =
+      Math.max(
+        0,
+        Number(
+          order.total_amount
+        ) - paid
+      )
+
+   await supabase
+  .from('orders')
+  .update({
+    paid_amount: paid,
+    remaining_amount: remaining,
+    payment_status:
+      remaining === 0
+        ? 'paid'
+        : 'partial',
+  })
+  .eq('id', order.id)
+
+  await supabase
+  .from('payment_transactions')
+  .insert({
+    order_id: order.id,
+    amount: amount,
+    payment_method: 'cash',
+    note: `Thu tiền đơn ${order.order_code}`,
+  })
+
+window.location.reload()
+
+}
+
+
+  const handlePrint = () => {
+
+  const printContents =
+    document.getElementById(
+      'invoice-print'
+    )?.outerHTML
+
+  if (!printContents) return
+
+  const printWindow =
+    window.open(
+      '',
+      '_blank'
+    )
+
+  if (!printWindow) return
+
+  printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Invoice</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+body{
+  background:white;
+  margin:0;
+  padding:0;
+}
+
+@media print {
+
+  body{
+    margin:0;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+${printContents}
+
+<script>
+
+window.onload = () => {
+
+  setTimeout(() => {
+
+    window.print()
+
+  }, 300)
+
+}
+
+</script>
+
+</body>
+</html>
+`)
+
+  printWindow.document.close()
+
+}
+
+if (!order) return null
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -66,133 +247,230 @@ export function OrderDetailSheet({
           <div className="flex items-center justify-between gap-2">
             <div>
               <SheetTitle className="flex items-center gap-2 font-mono">
-                {order.code}
+                {order.order_code}
               </SheetTitle>
               <SheetDescription>
-                Tạo lúc {formatDateTime(order.createdAt)}
+                Tạo lúc {formatDateTime(order.created_at)}
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
 
-<div className="p-8">
 
-  {/* KHÁCH HÀNG */}
-  <div className="mb-8">
+       <div className="p-8">
 
-    <p className="text-xs uppercase tracking-widest text-slate-500">
-      Khách hàng
-    </p>
+  <h2 className="text-2xl font-bold mb-6">
+    Thông tin đơn hàng
+  </h2>
 
-    <h2 className="mt-2 text-3xl font-bold">
-      {order.customers?.full_name || 'Khách lẻ'}
-    </h2>
+  <div className="space-y-3">
 
-    <p className="mt-1 text-slate-400">
+   <div className="rounded-xl border border-slate-800 p-4 mb-4">
+
+  <div className="flex justify-between mb-2">
+    <span className="text-slate-400">
+      Đã thu
+    </span>
+
+    <span className="font-semibold text-green-500">
+      {Number(
+        order.paid_amount || 0
+      ).toLocaleString('vi-VN')}đ
+    </span>
+  </div>
+
+  <div className="flex justify-between">
+    <span className="text-slate-400">
+      Còn nợ
+    </span>
+
+    <span className="font-semibold text-red-500">
+      {Number(
+        order.remaining_amount || 0
+      ).toLocaleString('vi-VN')}đ
+    </span>
+  </div>
+
+</div>
+
+<div className="rounded-xl border border-slate-800 p-4">
+
+  <div className="mb-3 text-xs uppercase tracking-wider text-slate-500">
+    Lịch sử thanh toán
+  </div>
+
+  {paymentHistory.length === 0 && (
+    <div className="text-sm text-slate-500">
+      Chưa có giao dịch
+    </div>
+  )}
+
+  {paymentHistory.map((p) => (
+    <div
+      key={p.id}
+      className="flex justify-between border-b border-slate-800 py-2"
+    >
+      <div>
+        <div className="text-sm font-medium text-green-400">
+          +{Number(
+            p.amount
+          ).toLocaleString('vi-VN')}đ
+        </div>
+
+        <div className="text-xs text-slate-500">
+          {formatDateTime(
+            p.created_at
+          )}
+        </div>
+      </div>
+    </div>
+  ))}
+
+</div>
+
+<div className="rounded-xl border border-slate-800 p-4">
+
+  <div className="mb-2 text-xs uppercase tracking-wider text-slate-500">
+    Thông tin khách hàng
+  </div>
+
+  <div className="space-y-2 text-sm">
+
+    <div>
+      <span className="text-slate-400">
+        Khách hàng:
+      </span>
+      {' '}
+      <span className="font-medium">
+        {order.customers?.full_name}
+      </span>
+    </div>
+
+    <div>
+      <span className="text-slate-400">
+        SĐT:
+      </span>
+      {' '}
       {order.customers?.phone}
-    </p>
+    </div>
+
+    <div>
+      <span className="text-slate-400">
+        Địa chỉ:
+      </span>
+      {' '}
+      {order.customers?.address}
+    </div>
+
+    <div>
+      <span className="text-slate-400">
+        Mã đơn:
+      </span>
+      {' '}
+      {order.order_code}
+    </div>
 
   </div>
 
-  <div className="h-px bg-slate-800 mb-8" />
+</div>
 
-  {/* SẢN PHẨM */}
-  <div className="mb-8">
+  <div className="mt-6">
 
-    <p className="mb-3 text-xs uppercase tracking-widest text-slate-500">
-      Sản phẩm
-    </p>
-
-    {order.order_items?.map((item: any) => (
+    {(order.order_items || []).map(
+      (item:any) => (
 
       <div
         key={item.id}
-        className="flex items-start justify-between py-4"
+        className="flex justify-between border-b py-3"
       >
-
         <div>
-
-          <p className="text-sm font-medium">
-  {item.product_name}
-</p>
-
-          <p className="mt-1 text-sm text-slate-500">
-            {item.quantity} × {Number(item.sale_price).toLocaleString('vi-VN')}đ
-          </p>
-
+          {item.product_name}
+          <div className="text-xs text-muted-foreground">
+            SL: {item.quantity}
+          </div>
         </div>
 
-        <div className="text-right">
-
-          <p className="text-lg font-semibold">
-            {Number(item.subtotal).toLocaleString('vi-VN')}đ
-          </p>
-
+        <div>
+          {Number(
+            item.subtotal
+          ).toLocaleString('vi-VN')}đ
         </div>
 
       </div>
 
-    ))}
+    ))
+    }
 
   </div>
 
-  <div className="h-px bg-slate-800 mb-8" />
+  <div className="mt-6 text-right">
 
-  {/* THANH TOÁN */}
-  <div className="space-y-3">
-
-    <div className="flex justify-between text-slate-400">
-      <span>Tạm tính</span>
-      <span>
-        {Number(order.subtotal).toLocaleString('vi-VN')}đ
-      </span>
+    <div className="text-xl font-bold">
+      {Number(
+        order.total_amount
+      ).toLocaleString('vi-VN')}đ
     </div>
 
-    <div className="flex justify-between text-slate-400">
-      <span>Giảm giá</span>
-      <span>
-        {Number(order.discount).toLocaleString('vi-VN')}đ
-      </span>
-    </div>
-
-    <div className="flex justify-between text-slate-400">
-      <span>Vận chuyển</span>
-      <span>
-        {Number(order.shipping_fee).toLocaleString('vi-VN')}đ
-      </span>
-    </div>
-
-    <div className="my-4 h-px bg-slate-800" />
-
-    <div className="flex items-end justify-between">
-
-     <div>
-
-  <p className="text-xs uppercase tracking-widest text-slate-500">
-    Tổng cộng
-  </p>
-
-  <p className="mt-2 text-2xl font-bold">
-    {Number(order.total_amount).toLocaleString('vi-VN')}đ
-  </p>
+  </div>
 
 </div>
 
-      <OrderStatusBadge status={order.status} />
-
-    </div>
-
+<div className="hidden">
+  <InvoicePrint order={order} />
 </div>
 
-</div>
+<div className="border-t border-border p-4">
 
-        <div className="flex gap-2 border-t border-border p-4">
-          <Button variant="outline" className="flex-1">
-            <Printer data-icon="inline-start" /> In đơn
-          </Button>
-          <Button className="flex-1">Cập nhật trạng thái</Button>
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
+  <div className="grid gap-3">
+
+    <Button
+      variant="outline"
+      onClick={handlePrint}
+      className="w-full"
+    >
+      <Printer className="mr-2 h-4 w-4" />
+      In hóa đơn
+    </Button>
+
+    <div className="flex gap-2">
+
+  <input
+    type="number"
+    placeholder="Nhập số tiền thu"
+    value={paymentAmount}
+    onChange={(e) =>
+      setPaymentAmount(
+        e.target.value
+      )
+    }
+    className="
+      flex-1
+      h-10
+      rounded-md
+      border
+      border-slate-700
+      bg-slate-900
+      px-3
+      text-sm
+      text-white
+    "
+  />
+
+  <Button
+    onClick={handleCollectPayment}
+    className="min-w-[110px]"
+  >
+    Thu tiền
+  </Button>
+
+</div>
+  
+
+  </div>
+
+</div>
+</div>
+</SheetContent>
+</Sheet>
+)
 }
