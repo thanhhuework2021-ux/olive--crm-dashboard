@@ -64,7 +64,7 @@ interface CartLine {
 export function CreateOrderClient() {
 
   const [paymentMethod, setPaymentMethod] =
-  useState('cod')
+  useState('COD')
 
 const [shippingProvider, setShippingProvider] =
   useState('GHN')
@@ -75,6 +75,9 @@ const [paidAmount, setPaidAmount] =
   const [search, setSearch] = useState('')
   const [selectedProduct, setSelectedProduct] =
     useState('all')
+
+  const [stockFilter, setStockFilter] =
+  useState('all')
   const [category, setCategory] = useState('all')
   const [cart, setCart] = useState<CartLine[]>([])
   const [productsData, setProductsData] = useState<any[]>([])
@@ -144,7 +147,7 @@ const [shippingFee, setShippingFee] =
 
   const [discountAmount, setDiscountAmount] =
     useState(0)
-  const [payment, setPayment] = useState('cash')
+  
   const [orderNote, setOrderNote] = useState('')
   const [showAllProducts, setShowAllProducts] =
     useState(false)
@@ -156,24 +159,35 @@ const [shippingFee, setShippingFee] =
 
   const filteredProducts = productsData.filter((p) => {
 
-    const matchSearch =
-      !search ||
-      p.name?.toLowerCase().includes(
-        search.toLowerCase()
-      ) ||
-      p.sku?.toLowerCase().includes(
-        search.toLowerCase()
-      )
-
-    const matchProduct =
-      selectedProduct === 'all' ||
-      p.name === selectedProduct
-
-    return (
-      matchSearch &&
-      matchProduct
+  const matchSearch =
+    !search ||
+    p.name?.toLowerCase().includes(
+      search.toLowerCase()
+    ) ||
+    p.sku?.toLowerCase().includes(
+      search.toLowerCase()
     )
-  })
+
+  const matchProduct =
+    selectedProduct === 'all' ||
+    p.name === selectedProduct
+
+  const matchStock =
+    stockFilter === 'all'
+      ? true
+      : stockFilter === 'active'
+      ? Number(p.stock_quantity) > 5
+      : stockFilter === 'low'
+      ? Number(p.stock_quantity) > 0 &&
+        Number(p.stock_quantity) <= 5
+      : Number(p.stock_quantity) <= 0
+
+  return (
+    matchSearch &&
+    matchProduct &&
+    matchStock
+  )
+})
 
   useEffect(() => {
     loadData()
@@ -484,10 +498,10 @@ const customerCode =
 
   product_id: item.product.id,
 
-  sku: item.product.sku,
+  sku: item.sku,
 
   product_name:
-    item.product.name,
+    item.name,
 
   color:
     item.product.color,
@@ -529,7 +543,7 @@ const customerCode =
         console.log(
           'CREATE SALE LOG',
           orderCode,
-          item.product.sku
+          item.sku
         )
 
         const { error: logError } =
@@ -537,7 +551,7 @@ const customerCode =
             .from('inventory_transactions')
             .insert({
               product_id: item.product.id,
-              sku: item.product.sku,
+              sku: item.sku,
               transaction_type: 'SALE',
               quantity: item.quantity,
               stock_after: newStock,
@@ -572,12 +586,15 @@ const customerCode =
     }
 
     return (
-      <>
-        <div className="grid gap-6 lg:grid-cols-12">
 
-          {/* LEFT */}
+     <>
 
-          <div className="lg:col-span-8">
+
+    <div className="grid gap-6 lg:grid-cols-12">
+
+          {/* LEFT PANEL */}
+
+<div className="lg:col-span-8 flex flex-col gap-4">
 
             <div className="mb-4">
 
@@ -586,7 +603,7 @@ const customerCode =
                 <div className="relative flex-1">
 
   <Search
-    size={18}
+    size={15}
     className="
       absolute
       left-4
@@ -604,11 +621,11 @@ const customerCode =
     }
     className="
       w-full
-      rounded-2xl
+      rounded-x1
       border
       border-slate-700
       bg-slate-900
-      py-4
+      py-3
       pl-12
       pr-4
     "
@@ -661,173 +678,444 @@ const customerCode =
                   {productsData.length} sản phẩm
                 </span>
 
-                {filteredProducts.length > 8 && (
+               <div className="flex gap-2">
 
-                  <button
-                    onClick={() =>
-                      setShowAllProducts(!showAllProducts)
-                    }
-                    className="
-      rounded-lg
-      border
-      border-slate-700
-      px-4
-      py-2
-      text-sm
-      hover:border-cyan-500
-      "
-                  >
-                    {showAllProducts
-                      ? 'Thu gọn'
-                      : 'Xem thêm'}
-                  </button>
+  <button
+    onClick={() => setStockFilter('all')}
+    className={`rounded-full px-4 py-2 text-sm font-medium ${
+      stockFilter === 'all'
+        ? 'bg-cyan-500 text-white'
+        : 'bg-slate-800 text-slate-300'
+    }`}
+  >
+    Tất cả
+  </button>
 
-                )}
+  <button
+    onClick={() => setStockFilter('active')}
+    className={`rounded-full px-4 py-2 text-sm font-medium ${
+      stockFilter === 'active'
+        ? 'bg-green-500 text-white'
+        : 'bg-slate-800 text-slate-300'
+    }`}
+  >
+    Còn hàng
+  </button>
+
+  <button
+    onClick={() => setStockFilter('low')}
+    className={`rounded-full px-4 py-2 text-sm font-medium ${
+      stockFilter === 'low'
+        ? 'bg-yellow-500 text-black'
+        : 'bg-slate-800 text-slate-300'
+    }`}
+  >
+    Sắp hết
+  </button>
+
+  <button
+    onClick={() => setStockFilter('out')}
+    className={`rounded-full px-4 py-2 text-sm font-medium ${
+      stockFilter === 'out'
+        ? 'bg-red-500 text-white'
+        : 'bg-slate-800 text-slate-300'
+    }`}
+  >
+    Hết hàng
+  </button>
+
+</div>
+
 
               </div>
 
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div
+  className="
+    h-[420px]
+    overflow-y-auto
+    rounded-xl
+    border
+    border-slate-800
+    custom-scroll
+  "
+>
 
-              {displayedProducts.map((item) => (
+  <div
+    className="
+      sticky
+      top-0
+      z-10
+      grid
+      grid-cols-12
+      border-b
+      border-slate-700
+      bg-slate-950
+      px-4
+      py-3
+      text-xs
+      font-bold
+      uppercase
+      tracking-wide
+      text-slate-400
+    "
+  >
+    <div className="col-span-6">
+      Sản phẩm
+    </div>
 
-                <div
-                  key={item.id}
-                  className="
-group
-rounded-2xl
+    <div className="col-span-3 text-center">
+      Giá tiền
+    </div>
+
+    <div className="col-span-2 text-center">
+      Số lượng
+    </div>
+
+    <div className="col-span-1 text-center">
+      Thêm sản phẩm
+    </div>
+  </div>
+
+   {displayedProducts.map((item) => (
+
+  <div
+  
+  key={item.id}
+  className="
+    grid
+    grid-cols-12
+    items-center
+    border-b
+    border-slate-800
+    px-4
+    py-3
+    hover:bg-slate-900/40
+  "
+>
+
+   <div className="col-span-6 flex items-center gap-4">
+
+  <img
+  src={
+   item.image_url ||
+    '/placeholder-product.png'
+  }
+  className="
+    h-16
+    w-16
+    rounded-lg
+    object-cover
+  "
+/>
+
+<div>
+
+  <div className="font-semibold">
+    {item.name}
+  </div>
+
+  <div className="mt-1">
+
+  {Number(item.stock_quantity) > 5 && (
+    <span className="rounded-full bg-green-500/15 px-2 py-1 text-[10px] text-green-400">
+      Còn hàng
+    </span>
+  )}
+
+  {Number(item.stock_quantity) > 0 &&
+   Number(item.stock_quantity) <= 5 && (
+    <span className="rounded-full bg-yellow-500/15 px-2 py-1 text-[10px] text-yellow-400">
+      Sắp hết
+    </span>
+  )}
+
+  {Number(item.stock_quantity) <= 0 && (
+    <span className="rounded-full bg-red-500/15 px-2 py-1 text-[10px] text-red-400">
+      Hết hàng
+    </span>
+  )}
+
+</div>
+
+  <div className="text-sm text-slate-400">
+    {item.sku}
+  </div>
+
+</div>
+
+</div>
+
+    <div className="col-span-3 text-center font-semibold text-cyan-400">
+      {Number(item.sale_price).toLocaleString('vi-VN')} đ
+    </div>
+
+    <div className="col-span-2 flex justify-center">
+
+  <span
+    className="
+      rounded-full
+      bg-cyan-500/20
+      border
+      border-cyan-500/40
+      px-3
+      py-1
+      text-xs
+      font-bold
+      text-cyan-300
+    "
+  >
+    {item.stock_quantity}
+  </span>
+
+</div>
+
+<div className="col-span-1 flex justify-center">
+
+  <button
+    onClick={() => addToCart(item)}
+    className="
+      h-10
+      w-10
+      rounded-lg
+      bg-cyan-500
+      text-white
+      hover:bg-cyan-400
+    "
+  >
+    +
+  </button>
+
+</div>
+ 
+
+  </div>
+
+))}
+
+</div>
+
+{/* CART */}
+
+<div
+ className="
+mt-3
+rounded-lg
 border
 border-slate-800
 bg-slate-900/50
-p-2
-transition-all
-hover:border-cyan-500
-hover:shadow-xl
-hover:shadow-cyan-500/10
+p-3
 "
-                >
+>
 
-                  <img
-                    src={
-                      item.image_url ||
-                      '/placeholder-product.png'
-                    }
-                    alt={item.name}
-                    className="
-    mb-3
-    h-28
-    w-full
+  <div className="mb-4 flex items-center justify-between">
+
+  <h2 className="text-xl font-bold">
+    Giỏ hàng (
+    {cart.reduce(
+      (s, item) => s + item.quantity,
+      0
+    )}
+    )
+  </h2>
+
+  {cart.length > 0 && (
+    <button
+      onClick={() => setCart([])}
+      className="
+        rounded-lg
+        border
+        border-red-500/40
+        px-3
+        py-2
+        text-sm
+        text-red-400
+        hover:bg-red-500/10
+      "
+    >
+      🗑 Xóa tất cả
+    </button>
+  )}
+
+</div>
+
+  {cart.length === 0 ? (
+
+    <div className="text-center text-slate-500">
+      Chưa có sản phẩm
+    </div>
+
+  ) : (
+
+    <div className="space-y-3">
+
+      {cart.map((item) => (
+
+        <div
+  key={item.product.id}
+  className="
+    flex
+    items-center
+    justify-between
     rounded-xl
-    object-cover
-    bg-slate-800
+    border
+    border-slate-800
+    p-3
   "
-                  />
+>
 
-                  <h3 className="font-medium">
-                    {item.name}
-                  </h3>
+  <div className="flex items-center gap-4">
 
-                  <div className="text-sm text-slate-400">
-                    {item.sku}
-                  </div>
+    <img
+      src={
+        item.product.image_url ||
+        '/placeholder-product.png'
+      }
+      className="
+        h-16
+        w-16
+        rounded-lg
+        object-cover
+      "
+    />
 
-                  <div className="mt-2">
+    <div>
 
-                    {item.stock_quantity > 10 && (
-                      <span className="rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-400">
-                        Còn {item.stock_quantity}
-                      </span>
-                    )}
+  <div className="font-semibold">
+    {item.product.name}
+  </div>
 
-                   {item.stock_quantity > 0 &&
-  item.stock_quantity <= 10 && (
-    <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-xs text-yellow-400">
-      Còn {item.stock_quantity}
+  <div className="text-xs text-slate-400">
+    {item.product.sku}
+  </div>
+
+  <div className="mt-1">
+
+    {item.product.color && (
+      <span
+        className="
+          rounded-full
+          bg-cyan-500/15
+          px-2
+          py-1
+          text-[10px]
+          text-cyan-300
+        "
+      >
+        {item.product.color}
+      </span>
+    )}
+
+  </div>
+
+</div>
+
+
+  </div>
+
+  <div className="text-right">
+
+    <div className="text-cyan-400 font-bold">
+      {item.price.toLocaleString('vi-VN')} đ
+    </div>
+
+    <div className="text-xs text-slate-400">
+      Đơn giá
+    </div>
+
+  </div>
+
+  <div className="flex items-center gap-2">
+
+    <button
+      onClick={() =>
+        updateQty(item.product.id, -1)
+      }
+      className="rounded bg-slate-700 px-2"
+    >
+      -
+    </button>
+
+    <span>
+      {item.quantity}
     </span>
-)}
 
-                    {item.stock_quantity === 0 && (
-                      <span className="rounded-full bg-red-500/20 px-2 py-1 text-xs text-red-400">
-                        Hết hàng
-                      </span>
-                    )}
-                    <span
-                      className={`
-      rounded-full
-      px-2
+    <button
+      onClick={() =>
+        updateQty(item.product.id, 1)
+      }
+      className="rounded bg-slate-700 px-2"
+    >
+      +
+    </button>
+
+  </div>
+
+  <div className="w-32 text-right">
+
+    <div className="font-bold text-green-400">
+      {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+    </div>
+
+    <div className="text-xs text-slate-400">
+      Thành tiền
+    </div>
+
+  </div>
+  
+
+  <button
+    onClick={() =>
+      removeLine(item.product.id)
+    }
+    className="
+      rounded
+      bg-red-500
+      px-3
       py-1
-      text-xs
-      font-medium
+    "
+  >
+    X
+  </button>
 
-      ${item.color === 'RED'
-                          ? 'bg-red-500/20 text-red-400'
-                          : item.color === 'GREEN'
-                            ? 'bg-green-500/20 text-green-400'
-                            : item.color === 'YELLOW'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : item.color === 'WHITE'
-                                ? 'bg-white/20 text-white'
-                                : item.color === 'BLACK'
-                                  ? 'bg-slate-700 text-slate-200'
-                                  : item.color === 'ORANGE'
-                                    ? 'bg-orange-500/20 text-orange-400'
-                                    : item.color === 'CREAM'
-                                      ? 'bg-amber-100/20 text-amber-200'
-                                      : 'bg-cyan-500/20 text-cyan-400'
-                        }
-    `}
-                    >
-                      {item.color}
-                    </span>
+</div>
 
-                  </div>
+        
+      ))}
 
+      <div className="mt-4 border-t pt-4">
 
-                  <div className="mt-1 text-cyan-400 font-semibold">
-                    {Number(item.sale_price).toLocaleString('vi-VN')} đ
-                  </div>
+        <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+          <span>Tạm tính</span>
+          <span>
+            {subtotal.toLocaleString('vi-VN')} đ
+          </span>
+        </div>
 
-                  <Button
-                    disabled={
-                      (item.stock_quantity || 0) <= 0
-                    }
-                    onClick={() => addToCart(item)}
-                    className={
-                      (item.stock_quantity || 0) <= 0
-                        ? 'opacity-50 cursor-not-allowed'
-                        : ''
-                    }
-                  >
-                    {(item.stock_quantity || 0) <= 0
-                      ? 'Hết hàng'
-                      : 'Thêm vào giỏ'}
-                  </Button>
+        <div className="mt-2 flex justify-between text-1xl font-bold text-green-400">
+          <span>Tổng</span>
+          <span>
+            {total.toLocaleString('vi-VN')} đ
+          </span>
+        </div>
 
-                </div>
+      </div>
 
-              ))}
+    </div>
 
-              <div className="mt-4 flex justify-center">
+  )}
 
-              </div>
+</div>
 
-            </div>
+</div>
 
-          </div>
+{/* RIGHT SIDEBAR */}
 
+<div className="lg:col-span-4">
 
-
-          {/* RIGHT */}
-
-          <div className="lg:col-span-4 min-w-[420px]">
-
-            <div className="sticky top-4 h-[calc(100vh-100px)]
-overflow-auto space-y-4">
-
-
-
-              <h2 className="mb-6 text-3xl font-bold">
+  <div className="space-y-4">
+              <h2 className="mb-3 text-1xl font-bold">
   Thông Tin Khách hàng
 </h2>
 
@@ -844,12 +1132,12 @@ overflow-auto space-y-4">
     }
     className="
       w-full
-      rounded-2xl
+      rounded-x1
       border
       border-cyan-700
       bg-slate-900
-      py-4
-      px-5
+      py-1
+      px-2
       text-cyan-400
       font-semibold
       placeholder:text-cyan-500/70
@@ -881,7 +1169,7 @@ overflow-auto space-y-4">
 <div className="relative mt-3">
 
   <User
-    size={18}
+    size={15}
     className="
       absolute
       left-4
@@ -900,11 +1188,11 @@ overflow-auto space-y-4">
     className="
       mt-2
       w-full
-      rounded-2xl
+      rounded-x1
       border
       border-slate-700
       bg-slate-900
-      py-4
+      py-3
       pl-12
       pr-4
     "
@@ -915,7 +1203,7 @@ overflow-auto space-y-4">
              <div className="relative">
 
   <Phone
-    size={18}
+    size={15}
     className="
       absolute
       left-4
@@ -934,11 +1222,11 @@ overflow-auto space-y-4">
     className="
       mt-2
       w-full
-      rounded-2xl
+      rounded-x1
       border
       border-slate-700
       bg-slate-900
-      py-4
+      py-3
       pl-12
       pr-4
     "
@@ -949,7 +1237,7 @@ overflow-auto space-y-4">
               <div className="relative">
 
   <MapPin
-    size={18}
+    size={15}
     className="
       absolute
       left-4
@@ -968,11 +1256,11 @@ overflow-auto space-y-4">
     className="
       mt-2
       w-full
-      rounded-2xl
+      rounded-x1
       border
       border-slate-700
       bg-slate-900
-      py-4
+      py-3
       pl-12
       pr-4
     "
@@ -980,187 +1268,97 @@ overflow-auto space-y-4">
 
 </div>
 
-              <div className="mt-4">
-
-                <label>
-                  Giảm giá
-                </label>
-
-                <div className="relative">
-
-  <Percent
-    size={18}
-    className="
-      absolute
-      left-4
-      top-1/2
-      -translate-y-1/2
-      text-slate-400
-    "
-  />
-
-  <input
-    type="number"
-    value={discountAmount}
-    onChange={(e) =>
-      setDiscountAmount(
-        Number(e.target.value)
-      )
-    }
-    className="
-      mt-2
-      w-full
-      rounded-2xl
-      border
-      border-slate-700
-      bg-slate-900
-      py-4
-      pl-12
-      pr-4
-    "
-  />
-
 </div>
 
-              </div>
+{/* PAYMENT */}
 
-              <div className="mt-4">
+<div className="lg:col-span-3 min-w-[320px]">
+  
+  <div className="space-y-2">
 
-  <label>
-    Phí ship
-  </label>
+    <h2 className="mb-2 text-lg font-semibold">
+  Thanh toán
+</h2>
 
-  <div className="relative">
+    {/* Giảm giá */}
 
-    <Truck
-      size={18}
-      className="
-        absolute
-        left-4
-        top-1/2
-        -translate-y-1/2
-        text-slate-400
-      "
-    />
+    <div>
+      <label className="text-xs text-slate-400">
+        Giảm giá
+      </label>
 
-    <input
-      type="number"
-      value={shippingFee}
-      onChange={(e) =>
-        setShippingFee(
-          Number(e.target.value)
-        )
-      }
-      className="
-        mt-2
-        w-full
-        rounded-2xl
-        border
-        border-slate-700
-        bg-slate-900
-        py-4
-        pl-12
-        pr-4
-      "
-    />
+      <input
+        type="number"
+        value={discountAmount}
+        onChange={(e) =>
+          setDiscountAmount(Number(e.target.value))
+        }
+        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+      />
+    </div>
 
-  </div>
+    {/* Ship */}
 
-</div>
+    <div>
+      <label className="text-xs text-slate-400">
+        Phí ship
+      </label>
 
-<div className="mt-4">
+      <input
+        type="number"
+        value={shippingFee}
+        onChange={(e) =>
+          setShippingFee(Number(e.target.value))
+        }
+        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+      />
+    </div>
 
-  <label>
-    Phương thức thanh toán
-  </label>
+    {/* Thanh toán */}
 
-  <select
-  value={paymentMethod}
-  onChange={(e) =>
-    setPaymentMethod(
-      e.target.value
-    )
-  }
-  className="
-    mt-2
-    w-full
-    rounded-2xl
-    border
-    border-slate-700
-    bg-slate-900
-    p-4
-  "
->
-  <option value="cash">
-    Tiền mặt
-  </option>
+    <div>
+      <label className="text-xs text-slate-400">
+        Phương thức thanh toán
+      </label>
 
-  <option value="bank">
-    Chuyển khoản
-  </option>
+      <select
+        value={paymentMethod}
+        onChange={(e) =>
+          setPaymentMethod(e.target.value)
+        }
+        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+      >
+        <option value="cash">Tiền mặt</option>
+        <option value="bank">Chuyển khoản</option>
+        <option value="cod">COD</option>
+        <option value="momo">MoMo</option>
+      </select>
+    </div>
 
-  <option value="cod">
-    COD
-  </option>
+    {/* ĐVVC */}
 
-  <option value="momo">
-    MoMo
-  </option>
-</select>
+    <div>
+      <label className="text-xs text-slate-400">
+        Đơn vị vận chuyển
+      </label>
 
-</div>
+      <select
+        value={shippingProvider}
+        onChange={(e) =>
+          setShippingProvider(e.target.value)
+        }
+        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+      >
+        <option value="GHN">GHN</option>
+        <option value="GHTK">GHTK</option>
+        <option value="J&T">J&T</option>
+        <option value="Viettel">Viettel</option>
+      </select>
+    </div>
 
-<div className="mt-4">
-
-  <label>
-    Đơn vị vận chuyển
-  </label>
-
-  <select
-    value={shippingProvider}
-    onChange={(e) =>
-      setShippingProvider(
-        e.target.value
-      )
-    }
-    className="
-      mt-2
-      w-full
-      rounded-2xl
-      border
-      border-slate-700
-      bg-slate-900
-      p-4
-    "
-  >
-
-    <option value="GHN">
-      GHN
-    </option>
-
-    <option value="GHTK">
-      GHTK
-    </option>
-
-    <option value="J&T">
-      J&T
-    </option>
-
-    <option value="Viettel">
-      Viettel Post
-    </option>
-
-    <option value="SELF">
-      Khách tự lấy
-    </option>
-
-  </select>
-
-</div>
-
-<div className="mt-4">
-
-  <label>
+    {/* Đã thu */}
+    
+  <label className="text-xs text-slate-400">
     Đã thu trước
   </label>
 
@@ -1168,184 +1366,99 @@ overflow-auto space-y-4">
     type="number"
     value={paidAmount}
     onChange={(e) =>
-      setPaidAmount(
-        Number(
-          e.target.value
-        )
-      )
+      setPaidAmount(Number(e.target.value))
     }
-    className="
-      mt-2
-      w-full
-      rounded-2xl
-      border
-      border-slate-700
-      bg-slate-900
-      p-4
-    "
+    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
   />
+</div>
+
+{/* TOTAL */}
+
+<div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+
+  <div className="flex justify-between">
+    <span>Tạm tính</span>
+    <span>
+      {subtotal.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
+
+  <div className="mt-3 flex justify-between">
+    <span>Giảm giá</span>
+    <span>
+      {discountAmount.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
+
+  <div className="mt-3 flex justify-between">
+    <span>Phí ship</span>
+    <span>
+      {shippingFee.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
+
+  <div className="my-4 border-t border-slate-700" />
+
+  <div className="flex justify-between text-green-400 text-1xl font-bold">
+    <span>Thành Tiền</span>
+    <span>
+      {total.toLocaleString('vi-VN')} đ
+    </span>
+  </div>
+
+  <div className="flex justify-between text-blue-400 text-1xl font-bold">
+    <span>Còn Lại</span>
+    <span>
+      {Math.max(total - paidAmount, 0).toLocaleString('vi-VN')} đ
+    </span>
+  </div>
+
+  <button
+    onClick={() => setShowConfirm(true)}
+    className="
+      mt-6
+      w-full
+      rounded-xl
+      bg-cyan-500
+      py-4
+      text-lg
+      font-bold
+      text-white
+    "
+  >
+    Xác nhận tạo đơn
+  </button>
 
 </div>
 
-              <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800">
+</div>
 
-                <div className="grid grid-cols-12 bg-slate-900 px-2 py-2 text-xs font-semibold text-slate-400">
+</div>
 
-                  <div className="col-span-2">
-                    SKU
-                  </div>
-
-                  <div className="col-span-4">
-                    Sản phẩm
-                  </div>
-
-                  <div className="col-span-2">
-                    Màu
-                  </div>
-
-                  <div className="col-span-1 text-center">
-                    SL
-                  </div>
-
-                  <div className="col-span-2 text-right">
-                    Tiền
-                  </div>
-
-                  <div className="col-span-1 text-right">
-                  </div>
-
-                </div>
-
-                {cart.map((item) => (
-
-                  <div
-                    key={item.product.id}
-                    className="grid grid-cols-12 border-t border-slate-800 px-2 py-3 text-sm"
-                  >
-
-                    <div className="col-span-2 text-slate-400">
-                      {item.product.sku}
-                    </div>
-
-                    <div className="col-span-4">
-                      {item.product.name}
-                    </div>
-
-                    <div className="col-span-2 text-cyan-400">
-                      {item.product.color || '-'}
-                    </div>
-
-                    <div className="col-span-1 text-center">
-                      {item.quantity}
-                    </div>
-
-                    <div className="col-span-2 text-right font-semibold text-green-400">
-                      {(item.price * item.quantity).toLocaleString('vi-VN')} đ
-                    </div>
-
-                    <div className="col-span-1 text-right">
-
-                      <button
-                        onClick={() =>
-                          removeLine(item.product.id)
-                        }
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        ✕
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-
-              <div className="mt-8 border-t border-slate-800 pt-6 text-lg">
-
-                <div className="flex justify-between">
-                  <span>Tạm tính</span>
-                  <span>
-                    {subtotal.toLocaleString(
-                      'vi-VN'
-                    )} đ
-                  </span>
-                </div>
-
-                <div className="mt-2 flex justify-between">
-                  <span>Giảm giá</span>
-
-                  <span>
-                    {discountAmount.toLocaleString(
-                      'vi-VN'
-                    )} đ
-                  </span>
-                </div>
-
-                <div className="mt-2 flex justify-between">
-                  <span>Ship</span>
-                  <span>
-                    {shippingFee.toLocaleString(
-                      'vi-VN'
-                    )} đ
-                  </span>
-                </div>
-
-                <div className="mt-6 flex justify-between text-2xl font-bold text-green-400">
-
-                  <span>
-                    Thành tiền
-                  </span>
-
-                  <span>
-                    {total.toLocaleString(
-                      'vi-VN'
-                    )} đ
-                  </span>
-
-                </div>
-
-              </div>
-
-              <button
-                onClick={() =>
-                  setShowConfirm(true)
-                }
-                className="
-mt-8
-w-full
-rounded-2xl
-bg-green-500
-py-5
-text-xl
-font-bold
-text-black
-transition
-hover:scale-[1.01]
-hover:bg-green-400
-"
-              >
-                Tạo đơn hàng
-              </button>
-
-            </div>
-
-
-          </div>
-
-        </div>
-
+       </div> 
         {showConfirm && (
 
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
+         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
 
-            <div className="w-[380px] rounded-2xl bg-slate-900 p-6">
+  <div
+    className="
+      w-[420px]
+      rounded-2xl
+      border
+      border-slate-700
+      bg-slate-950
+      p-5
+      shadow-2xl
+    "
+  >
 
-              <h2 className="mb-6 text-center text-lg font-bold">
-                Xác nhận tạo đơn hàng
-              </h2>
+    <h2 className="mb-2 text-center text-xl font-semibold">
+      Xác nhận tạo đơn
+    </h2>
+
+    <p className="mb-5 text-center text-sm text-slate-400">
+      Kiểm tra lại thông tin trước khi tạo đơn hàng
+    </p>
 
               <p className="mb-6 text-center text-slate-300">
                 Khách hàng:
@@ -1354,13 +1467,23 @@ hover:bg-green-400
                 </span>
               </p>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2">
 
                 <button
                   onClick={() =>
                     setShowConfirm(false)
                   }
-                  className="flex-1 rounded-xl bg-slate-700 py-3"
+                  className="
+flex-1
+rounded-lg
+border
+border-slate-600
+bg-slate-800
+py-2.5
+text-sm
+font-medium
+hover:bg-slate-700
+"
                 >
                   Hủy
                 </button>
@@ -1370,7 +1493,16 @@ hover:bg-green-400
                     setShowConfirm(false)
                     createOrder()
                   }}
-                  className="flex-1 rounded-xl bg-green-500 py-3 font-bold text-black"
+                  className="
+flex-1
+rounded-lg
+bg-cyan-500
+py-2.5
+text-sm
+font-semibold
+text-white
+hover:bg-cyan-600
+"
                 >
                   Xác nhận
                 </button>
@@ -1387,7 +1519,7 @@ hover:bg-green-400
 
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
 
-            <div className="w-[794px]
+            <div className="w-[760px]
 rounded-xl
 bg-white
 p-10
@@ -1397,7 +1529,7 @@ text-black">
 
               <div className="pt-2 text-center">
 
-                <h1 className="text-2xl font-bold tracking-[4px]">
+                <h1 className="text-xl font-bold tracking-[3px]">
                   OLIVE LIVING
                 </h1>
 
@@ -1417,9 +1549,9 @@ text-black">
 
                 </div>
 
-                <div className="mt-4 border-t pt-3">
+                <div className="mt-2 border-t pt-3">
 
-                  <h2 className="text-lg font-bold uppercase">
+                  <h2 className="text-base font-bold uppercase">
                     HÓA ĐƠN BÁN HÀNG
                   </h2>
 
@@ -1431,7 +1563,7 @@ text-black">
 
               {/* ORDER INFO */}
 
-<div className="mt-4 flex justify-between border-b pb-3 text-xs">
+<div className="mt-2 flex justify-between border-b pb-3 text-xs">
 
   <div>
     <strong>Mã đơn:</strong> DH{Date.now()}
@@ -1446,7 +1578,7 @@ text-black">
 
 {/* CUSTOMER INFO */}
 
-<div className="mt-3 rounded border p-2 text-[11px] leading-5">
+<div className="mt-3 rounded border p-2 text-[15px] leading-5">
 
   <div className="mb-1 font-bold border-b pb-1">
     THÔNG TIN ĐƠN HÀNG
@@ -1475,21 +1607,21 @@ text-black">
     </div>
 
     <div>
-      <strong>Đã thu:</strong>{' '}
+      <strong>Đã thanh toán:</strong>{' '}
       {paidAmount.toLocaleString('vi-VN')} đ
     </div>
 
   </div>
 
   <div className="mt-1">
-    <strong>Địa chỉ:</strong> {customerAddress}
-  </div>
+  <strong>Địa chỉ:</strong> {customerAddress}
+</div>
 
 </div>
 
 {/* PRODUCTS */}
 
-<table className="mt-3 w-full border-collapse text-[11px]">
+<table className="mt-3 w-full border-collapse text-[14px]">
 
   <thead>
 
@@ -1526,6 +1658,8 @@ text-black">
   <tbody>
 
     {cart.map((item) => (
+
+      
 
       <tr
         key={item.product.id}
@@ -1564,65 +1698,44 @@ text-black">
 
 </table>
 
+
+
 {/* TOTAL */}
 
-<div className="mt-3 ml-auto w-[280px] border rounded p-3 text-[12px]">
+<div className="mt-3 ml-auto w-[300px] p-1 text-[12px]">
 
-  <div className="flex justify-between">
+  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
     <span>Tạm tính</span>
-    <span>
-      {subtotal.toLocaleString('vi-VN')} đ
-    </span>
+    <span>{subtotal.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="flex justify-between">
+  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
     <span>Giảm giá</span>
-    <span>
-      {discountAmount.toLocaleString('vi-VN')} đ
-    </span>
+    <span>{discountAmount.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="flex justify-between">
+  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
     <span>Phí ship</span>
-    <span>
-      {shippingFee.toLocaleString('vi-VN')} đ
-    </span>
+    <span>{shippingFee.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="flex justify-between">
-    <span>Đã thu</span>
-    <span>
-      {paidAmount.toLocaleString('vi-VN')} đ
-    </span>
+  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+    <span>Đã Thanh Toán</span>
+    <span>{paidAmount.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 border-t pt-2">
+  <div className="mt-2 border-t border-black pt-2">
 
-    <div className="flex justify-between font-bold text-[15px] text-green-600">
-
-      <span>
-        THÀNH TIỀN
-      </span>
-
-      <span>
-        {total.toLocaleString('vi-VN')} đ
-      </span>
-
+    <div className="mt-2 flex justify-between text-1xl font-bold text-green-600">
+      <span>THÀNH TIỀN</span>
+      <span>{total.toLocaleString('vi-VN')} đ</span>
     </div>
 
-    <div className="mt-1 flex justify-between font-bold text-[15px] text-red-600">
-
+    <div className="mt-2 flex justify-between text-1xl font-bold text-blue-800">
+      <span>CÒN LẠI</span>
       <span>
-        CÒN THU
+        {Math.max(total - paidAmount, 0).toLocaleString('vi-VN')} đ
       </span>
-
-      <span>
-        {Math.max(
-          total - paidAmount,
-          0
-        ).toLocaleString('vi-VN')} đ
-      </span>
-
     </div>
 
   </div>
@@ -1630,7 +1743,7 @@ text-black">
 </div>
 
             
-              <div className="mt-6 rounded-lg border bg-gray-50 p-4 text-[11px] leading-5">
+              <div className="mt-4 rounded-lg border bg-gray-50 p-3 text-[14px] leading-4">
 
                 <div className="mb-3 text-center font-bold">
                   CHÍNH SÁCH KIỂM TRA & ĐỔI TRẢ
@@ -1670,8 +1783,8 @@ text-black">
 
                 <div className="mt-2 rounded border bg-blue-50 p-2 text-blue-700">
 
-                  Liên hệ +84 79 937 9179 hoặc
-                  olivelivingvn@gmail.com để được hỗ trợ.
+                  Liên hệ 079 937 9179 để được hỗ trợ.
+       
 
                 </div>
 
@@ -1679,7 +1792,7 @@ text-black">
 
               {/* SIGN */}
 
-              <div className="mt-8 grid grid-cols-2 text-center text-xs">
+              <div className="mt-5 grid grid-cols-2 text-center text-[11px]">
 
                 <div>
 
@@ -1724,12 +1837,10 @@ text-black">
                 >
                   Đóng
                 </button>
-
+</div>
               </div>
             </div>
-
-          </div>
-
+       
         )}
 
       </>
