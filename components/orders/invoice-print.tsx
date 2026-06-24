@@ -75,6 +75,8 @@ export default function InvoicePrint({
 
         <div className="grid grid-cols-1 gap-2 text-sm">
 
+          
+
           <p>
             <span className="font-semibold">
               Họ tên:
@@ -89,6 +91,13 @@ export default function InvoicePrint({
             {order.customers?.phone}
           </p>
 
+<p>
+  <span className="font-semibold">
+    Mã KH:
+  </span>{' '}
+  {order.customers?.customer_code}
+</p>
+
           <p>
             <span className="font-semibold">
               Địa chỉ:
@@ -101,147 +110,162 @@ export default function InvoicePrint({
       </div>
 
       {/* PRODUCTS */}
-      <div className="mt-8">
+<div className="mt-8">
 
-        <table className="w-full">
+  <table className="w-full border-collapse">
 
-          <thead>
+    <thead>
 
-            <tr className="border-b-2 border-black">
+      <tr className="border-b-2 border-black">
 
-              <th className="pb-3 text-left text-xs uppercase tracking-wider">
-                STT
-              </th>
+        <th className="pb-3 text-left text-[11px] font-bold uppercase tracking-widest">
+          STT
+        </th>
 
-              <th className="pb-3 text-left text-xs uppercase tracking-wider">
-                SKU
-              </th>
+        <th className="pb-3 text-left text-[11px] font-bold uppercase tracking-widest">
+          SKU
+        </th>
 
-              <th className="pb-3 text-left text-xs uppercase tracking-wider">
-                Sản phẩm
-              </th>
+        <th className="pb-3 text-left text-[11px] font-bold uppercase tracking-widest">
+          Sản phẩm
+        </th>
 
-              <th className="pb-3 text-center text-xs uppercase tracking-wider">
-                SL
-              </th>
+        <th className="pb-3 text-center text-[11px] font-bold uppercase tracking-widest">
+          Màu
+        </th>
 
-              <th className="pb-3 text-right text-xs uppercase tracking-wider">
-                Đơn giá
-              </th>
+        <th className="pb-3 text-center text-[11px] font-bold uppercase tracking-widest">
+          SL
+        </th>
 
-              <th className="pb-3 text-right text-xs uppercase tracking-wider">
-                Thành tiền
-              </th>
+        <th className="pb-3 text-right text-[11px] font-bold uppercase tracking-widest">
+          Đơn giá
+        </th>
 
-            </tr>
+        <th className="pb-3 text-right text-[11px] font-bold uppercase tracking-widest">
+          Thành tiền
+        </th>
 
-          </thead>
+      </tr>
 
-          <tbody>
+    </thead>
 
-            {(order.order_items || []).map(
-              (
-                item: any,
-                index: number
-              ) => (
+    <tbody>
 
-                <tr
-                  key={item.id}
-                  className="border-b border-gray-200"
-                >
+      {(order.order_items || []).map(
+        (
+          item: any,
+          index: number
+        ) => (
 
-                  <td className="py-4">
-                    {index + 1}
-                  </td>
+          <tr
+            key={item.id}
+            className="border-b border-gray-200"
+          >
 
-                  <td className="py-4 text-gray-500">
-                    {item.sku}
-                  </td>
+            <td className="py-4 text-sm">
+              {index + 1}
+            </td>
 
-                  <td className="py-4 font-medium">
-                    {item.product_name}
-                  </td>
+            <td className="py-4 text-sm text-gray-600">
+              {item.sku || '-'}
+            </td>
 
-                  <td className="py-4 text-center">
-                    {item.quantity}
-                  </td>
+            <td className="py-4 text-sm font-semibold">
+              {item.product_name}
+            </td>
 
-                  <td className="py-4 text-right">
-                    {Number(
-                      item.sale_price
-                    ).toLocaleString('vi-VN')} đ
-                  </td>
+            <td className="py-4 text-center text-sm text-gray-700">
+              {item.color || '-'}
+            </td>
 
-                  <td className="py-4 text-right font-semibold">
-                    {Number(
-                      item.subtotal
-                    ).toLocaleString('vi-VN')} đ
-                  </td>
+            <td className="py-4 text-center text-sm">
+              {item.quantity}
+            </td>
 
-                </tr>
+            <td className="py-4 text-right text-sm">
+              {Number(
+                item.sale_price || 0
+              ).toLocaleString('vi-VN')} đ
+            </td>
 
-              )
-            )}
+            <td className="py-4 text-right text-sm font-bold">
+              {Number(
+                item.subtotal || 0
+              ).toLocaleString('vi-VN')} đ
+            </td>
 
-          </tbody>
+          </tr>
 
-        </table>
+        )
+      )}
 
-      </div>
+    </tbody>
+
+  </table>
+
+</div>
 
       {/* TOTAL */}
-      <div className="mt-8 flex justify-end">
+<div className="mt-10 flex justify-end">
 
-        <div className="w-[320px]">
+  <div className="w-[320px] space-y-2">
 
-          <div className="flex justify-between py-2">
-            <span>Tạm tính</span>
+    <div className="flex justify-between">
+      <span>Thành tiền</span>
+      <span>
+        {Number(
+          order.subtotal || 0
+        ).toLocaleString('vi-VN')} đ
+      </span>
+    </div>
 
-            <span>
-              {Number(
-                order.subtotal
-              ).toLocaleString('vi-VN')} đ
-            </span>
-          </div>
+    <div className="flex justify-between">
+      <span>Phí ship</span>
+      <span>
+        {Number(
+          order.shipping_fee || 0
+        ).toLocaleString('vi-VN')} đ
+      </span>
+    </div>
 
-          <div className="flex justify-between py-2">
-            <span>Giảm giá</span>
+    <div className="flex justify-between">
+      <span>Giảm giá</span>
+      <span>
+        -{Number(
+          order.discount || 0
+        ).toLocaleString('vi-VN')} đ
+      </span>
+    </div>
 
-            <span>
-              {Number(
-                order.discount
-              ).toLocaleString('vi-VN')} đ
-            </span>
-          </div>
+    <div className="flex justify-between text-green-600">
+      <span>Đã thanh toán</span>
+      <span className="font-semibold">
+        {Number(
+          order.paid_amount || 0
+        ).toLocaleString('vi-VN')} đ
+      </span>
+    </div>
 
-          <div className="flex justify-between py-2">
-            <span>Vận chuyển</span>
+    <div className="mt-3 border-t-2 border-black pt-3 flex justify-between">
 
-            <span>
-              {Number(
-                order.shipping_fee
-              ).toLocaleString('vi-VN')} đ
-            </span>
-          </div>
+      <span className="text-xl font-bold">
+        CÒN LẠI
+      </span>
 
-          <div className="mt-3 flex justify-between border-t-2 border-black pt-4">
+      <span className="text-2xl font-black text-green-700">
+        {Math.max(
+          Number(order.total_amount || 0) -
+          Number(order.paid_amount || 0),
+          0
+        ).toLocaleString('vi-VN')} đ
+      </span>
 
-            <span className="text-xl font-bold">
-              TỔNG CỘNG
-            </span>
+    </div>
 
-            <span className="text-2xl font-black text-green-600">
-              {Number(
-                order.total_amount
-              ).toLocaleString('vi-VN')} đ
-            </span>
+  </div>
 
-          </div>
-
-        </div>
-
-      </div>
-
+</div>
       {/* POLICY */}
       <div className="mt-10 rounded-2xl bg-gray-50 p-5">
 
@@ -267,39 +291,9 @@ export default function InvoicePrint({
 
       </div>
 
-      {/* SIGNATURE */}
-      <div className="mt-12 grid grid-cols-2 gap-24">
-
-        <div className="text-center">
-
-          <p className="font-bold uppercase">
-            Khách hàng
-          </p>
-
-          <div className="h-16" />
-
-          <div className="border-t border-gray-400 pt-2 text-sm text-gray-500">
-            Ký và ghi rõ họ tên
-          </div>
-
         </div>
 
-        <div className="text-center">
-
-          <p className="font-bold uppercase">
-            Olive Living
-          </p>
-
-          <div className="h-16" />
-
-          <div className="border-t border-gray-400 pt-2 text-sm text-gray-500">
-            Ký và đóng dấu
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
+          
+  
   )
 }

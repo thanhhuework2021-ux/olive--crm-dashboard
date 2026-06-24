@@ -449,34 +449,71 @@ const customerCode =
         customerId = newCustomer.id
       }
 
-    
+      console.log('ORDER CREATED', orderData)
 
-      const {
-        data: orderData,
-        error,
-      } = await supabase
-        .from('orders')
-        .insert([
-          {
-            order_code: orderCode,
 
-            customer_id: customerId,
+      console.log('ORDER VALUES', {
+  total,
+  paidAmount,
+  remaining:
+    Math.max(
+      total - paidAmount,
+      0
+    )
+})
+const paid =
+  Number(paidAmount || 0)
 
-            customer_name: customerName,
+const remaining =
+  Math.max(
+    Number(total || 0) - paid,
+    0
+  )
 
-            subtotal: subtotal,
+console.log({
+  paid,
+  remaining,
+  total
+})
 
-            discount: discountAmount,
+const {
+  data: orderData,
+  error,
+} = await supabase
+  .from('orders')
+  .insert([
+    {
+      order_code: orderCode,
 
-            shipping_fee: shippingFee,
+      customer_id: customerId,
 
-            total_amount: total,
+      customer_name: customerName,
 
-            status: 'pending',
+      subtotal: subtotal,
 
-            payment_method: 'cash',
-          },
-        ])
+      discount: discountAmount,
+
+      shipping_fee: shippingFee,
+
+      total_amount: total,
+
+      paid_amount: paid,
+
+      remaining_amount: remaining,
+
+      payment_status:
+        paid === 0
+          ? 'unpaid'
+          : paid >= total
+          ? 'paid'
+          : 'partial',
+
+      status: 'pending',
+
+      payment_method:
+        paymentMethod,
+    },
+  ])
 
         .select()
         .single()
@@ -498,10 +535,11 @@ const customerCode =
 
   product_id: item.product.id,
 
-  sku: item.sku,
+  sku:
+  item.product.sku,
 
-  product_name:
-    item.name,
+product_name:
+  item.product.name,
 
   color:
     item.product.color,
@@ -551,7 +589,7 @@ const customerCode =
             .from('inventory_transactions')
             .insert({
               product_id: item.product.id,
-              sku: item.sku,
+              sku: item.product.sku,
               transaction_type: 'SALE',
               quantity: item.quantity,
               stock_after: newStock,
@@ -1587,7 +1625,7 @@ text-black">
   <div className="grid grid-cols-2 gap-x-6">
 
     <div>
-      <strong>Mã KH:</strong> {customerCode}
+      <strong>Mã KH:</strong> {order.customers?.customer_display_code}
     </div>
 
     <div>

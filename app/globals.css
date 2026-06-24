@@ -158,3 +158,8 @@
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: #06b6d4;
 }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}

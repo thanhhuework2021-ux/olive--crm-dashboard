@@ -107,60 +107,48 @@ const loadPaymentHistory =
     )
   }
 
-  
-
- 
-
-const handleCollectPayment =
+  const handleCollectPayment =
   async () => {
 
     const amount =
       Number(paymentAmount)
 
-    if (
-      !amount ||
-      amount <= 0
-    )
+    if (!amount || amount <= 0)
       return
 
     const paid =
-      Number(
-        order.paid_amount || 0
-      ) + amount
+      Number(order.paid_amount || 0)
+      + amount
 
     const remaining =
       Math.max(
         0,
-        Number(
-          order.total_amount
-        ) - paid
+        Number(order.total_amount) - paid
       )
 
-   await supabase
-  .from('orders')
-  .update({
-    paid_amount: paid,
-    remaining_amount: remaining,
-    payment_status:
-      remaining === 0
-        ? 'paid'
-        : 'partial',
-  })
-  .eq('id', order.id)
+    await supabase
+      .from('orders')
+      .update({
+        paid_amount: paid,
+        remaining_amount: remaining,
+        payment_status:
+          remaining === 0
+            ? 'paid'
+            : 'partial',
+      })
+      .eq('id', order.id)
 
-  await supabase
-  .from('payment_transactions')
-  .insert({
-    order_id: order.id,
-    amount: amount,
-    payment_method: 'cash',
-    note: `Thu tiền đơn ${order.order_code}`,
-  })
+    await supabase
+      .from('payment_transactions')
+      .insert({
+        order_id: order.id,
+        amount: amount,
+        payment_method: 'cash',
+        note: `Thu tiền đơn ${order.order_code}`,
+      })
 
-window.location.reload()
-
+    window.location.reload()
 }
-
 
   const handlePrint = () => {
 
@@ -236,19 +224,34 @@ window.onload = () => {
 
 }
 
+console.log('ORDER DETAIL SHEET LOADED')
+
 if (!order) return null
+
+console.log('ORDER ITEMS', order.order_items)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-  className="w-full p-0 sm:max-w-2xl"
+
+  <SheetContent
+  className="
+!w-[420px]
+!max-w-[420px]
+p-0
+overflow-hidden
+"
 >
+  
+
+
         <SheetHeader className="border-b border-border">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <SheetTitle className="flex items-center gap-2 font-mono">
-                {order.order_code}
-              </SheetTitle>
+              
+              <SheetTitle className="text-blue-500 text-2xl">
+  THÔNG TIN ĐƠN HÀNG 
+</SheetTitle>
+
               <SheetDescription>
                 Tạo lúc {formatDateTime(order.created_at)}
               </SheetDescription>
@@ -257,15 +260,24 @@ if (!order) return null
         </SheetHeader>
 
 
-       <div className="p-8">
+      <div className="flex h-[100vh] flex-col">
 
-  <h2 className="text-2xl font-bold mb-6">
-    Thông tin đơn hàng
-  </h2>
+       <div
+  className="
+    flex-1
+    overflow-y-auto
+    p-3
+    text-sm
+    custom-scroll
+  "
+>
 
-  <div className="space-y-3">
 
-   <div className="rounded-xl border border-slate-800 p-4 mb-4">
+  <h2 className="mb-1 text-sm font-semibold">
+  Thông tin đơn hàng
+</h2>
+
+  <div className="rounded-xl border border-slate-800 p-3 mb-3">
 
   <div className="flex justify-between mb-2">
     <span className="text-slate-400">
@@ -285,15 +297,17 @@ if (!order) return null
     </span>
 
     <span className="font-semibold text-red-500">
-      {Number(
-        order.remaining_amount || 0
+      {Math.max(
+        Number(order.total_amount || 0) -
+        Number(order.paid_amount || 0),
+        0
       ).toLocaleString('vi-VN')}đ
     </span>
   </div>
 
 </div>
 
-<div className="rounded-xl border border-slate-800 p-4">
+<div className="rounded-xl border border-slate-800 p-2.5">
 
   <div className="mb-3 text-xs uppercase tracking-wider text-slate-500">
     Lịch sử thanh toán
@@ -328,7 +342,7 @@ if (!order) return null
 
 </div>
 
-<div className="rounded-xl border border-slate-800 p-4">
+<div className="rounded-xl border border-slate-800 p-2.5">
 
   <div className="mb-2 text-xs uppercase tracking-wider text-slate-500">
     Thông tin khách hàng
@@ -370,25 +384,53 @@ if (!order) return null
       {order.order_code}
     </div>
 
+   <div>
+  <span className="text-slate-400">
+    Mã KH:
+  </span>
+  {' '}
+  {order.customers?.customer_display_code}
+</div>
+
   </div>
 
 </div>
 
-  <div className="mt-6">
+  <div className="mt-4">
 
-    {(order.order_items || []).map(
-      (item:any) => (
+   {(order.order_items || []).map(
+  (item:any) => {
+
+    console.log('ORDER ITEM =>', item)
+
+    return (
+        
 
       <div
         key={item.id}
-        className="flex justify-between border-b py-3"
+        className="flex justify-between border-b py-2"
       >
-        <div>
-          {item.product_name}
-          <div className="text-xs text-muted-foreground">
-            SL: {item.quantity}
-          </div>
-        </div>
+     <div>
+  <div className="font-medium">
+    {item.product_name || 'Sản phẩm'}
+  </div>
+
+  <div className="text-xs text-muted-foreground">
+    SL: {item.quantity}
+  </div>
+
+  {item.sku && (
+    <div className="text-xs text-slate-400">
+      SKU: {item.sku}
+    </div>
+  )}
+
+  {item.color && (
+    <div className="text-xs text-slate-400">
+      Màu: {item.color}
+    </div>
+  )}
+</div>
 
         <div>
           {Number(
@@ -398,15 +440,16 @@ if (!order) return null
 
       </div>
 
-    ))
-    }
-
+        )
+  })
+}
   </div>
 
-  <div className="mt-6 text-right">
+<div className="mt-3 text-right">
 
-    <div className="text-xl font-bold">
-      {Number(
+  <div className="text-base font-bold">
+
+           {Number(
         order.total_amount
       ).toLocaleString('vi-VN')}đ
     </div>
@@ -414,12 +457,20 @@ if (!order) return null
   </div>
 
 </div>
-
+</div>
 <div className="hidden">
   <InvoicePrint order={order} />
 </div>
 
-<div className="border-t border-border p-4">
+<div
+  className="
+    mt-auto
+    border-t
+    border-border
+    bg-slate-950
+    p-3
+  "
+>
 
   <div className="grid gap-3">
 
@@ -458,7 +509,7 @@ if (!order) return null
 
   <Button
     onClick={handleCollectPayment}
-    className="min-w-[110px]"
+    className="min-w-[90px]"
   >
     Thu tiền
   </Button>
@@ -468,7 +519,6 @@ if (!order) return null
 
   </div>
 
-</div>
 </div>
 </SheetContent>
 </Sheet>

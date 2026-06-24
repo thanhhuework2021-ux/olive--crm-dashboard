@@ -73,20 +73,22 @@ const ITEMS_PER_PAGE = 10
 
 const loadOrders = async () => {
 
-  const { data, error } =
-    await supabase
-      .from('orders')
-.select(`
-  *,
-  customers (
-    full_name,
-    phone,
-    address
-  ),
-  order_items (
-    *
-  )
-`)
+const { data, error } =
+  await supabase
+    .from('orders')
+    .select(`
+      *,
+      customers (
+  customer_code,
+  customer_display_code,
+  full_name,
+  phone,
+  address
+      ),
+      order_items (
+        *
+      )
+    `)
       .order(
         'created_at',
         { ascending: false }
@@ -364,9 +366,6 @@ const unpaidRevenue =
             
            <div className="relative">
 
-  <span className="absolute left-3 top-1/2 -translate-y-1/2">
-    📅
-  </span>
 
   <input
   type="date"
@@ -379,14 +378,15 @@ const unpaidRevenue =
   }}
     
     className="
-      h-10
+      h-8
       w-[170px]
       rounded-lg
       border
       border-slate-700
-      bg-slate-900
+      bg-slate-1000
       pl-10
       pr-3
+      
     "
   />
 
@@ -394,9 +394,6 @@ const unpaidRevenue =
 
 <div className="relative">
 
-  <span className="absolute left-3 top-1/2 -translate-y-1/2">
-    📅
-  </span>
 
   <input
     type="date"
@@ -405,14 +402,15 @@ const unpaidRevenue =
       setToDate(e.target.value)
     }
     className="
-      h-10
+      h-8
       w-[170px]
       rounded-lg
       border
       border-slate-700
-      bg-slate-900
+      bg-slate-1000
       pl-10
       pr-3
+      
     "
   />
 
@@ -557,16 +555,17 @@ const unpaidRevenue =
     )}
   </div>
 
-  <div className="text-xs font-medium text-red-500">
-    Nợ:
-    {' '}
-    {formatVND(
-      Number(
-        o.remaining_amount ||
-        0
-      )
-    )}
-  </div>
+ <div className="text-xs font-medium text-red-500">
+  Nợ:
+  {' '}
+  {formatVND(
+    Math.max(
+      Number(o.total_amount || 0) -
+      Number(o.paid_amount || 0),
+      0
+    )
+  )}
+</div>
 
 </div>
     </div>
