@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
 
 export default function StatusFilter({
   status,
@@ -9,15 +11,22 @@ export default function StatusFilter({
 }) {
   const router = useRouter()
 
+  const [isPending, startTransition] =
+  useTransition()
+
   return (
     <div className="relative">
       <select
         value={status}
-        onChange={(e) =>
-          router.push(
-            `/san-pham?status=${e.target.value}`
-          )
-        }
+        
+         onChange={(e) => {
+  startTransition(() => {
+    router.push(
+      `/san-pham?status=${e.target.value}`
+    )
+  })
+}}
+
         className="
           h-12
           appearance-none

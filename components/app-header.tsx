@@ -54,6 +54,16 @@ useEffect(() => {
       <Separator orientation="vertical" className="mr-1 h-6" />
       <h1 className="hidden text-base font-semibold md:block">{title}</h1>
 
+      <button
+        onClick={() => setCmdOpen(true)}
+        className="ml-auto flex h-9 w-full max-w-xs items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted md:ml-4 md:mr-auto"
+      >
+        <Search className="size-4" />
+        <span className="hidden sm:inline">Tìm kiếm...</span>
+        <kbd className="ml-auto hidden items-center gap-0.5 rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] sm:flex">
+          Ctrl K
+        </kbd>
+      </button>
 
       <div className="flex items-center gap-1.5">
         

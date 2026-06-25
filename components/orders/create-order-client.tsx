@@ -449,8 +449,6 @@ const customerCode =
         customerId = newCustomer.id
       }
 
-      console.log('ORDER CREATED', orderData)
-
 
       console.log('ORDER VALUES', {
   total,
@@ -1625,7 +1623,7 @@ text-black">
   <div className="grid grid-cols-2 gap-x-6">
 
     <div>
-      <strong>Mã KH:</strong> {order.customers?.customer_display_code}
+      <strong>Mã KH:</strong> {customerCode}
     </div>
 
     <div>
