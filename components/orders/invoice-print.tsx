@@ -18,11 +18,11 @@ export default function InvoicePrint({
 
           <div>
 
-            <h1 className="text-4xl font-black tracking-[10px]">
+            <h1 className="text-[42px] font-black tracking-[8px]">
               OLIVE LIVING
             </h1>
 
-            <div className="mt-4 space-y-1 text-xs text-gray-500">
+            <div className="mt-3 space-y-1 text-[13px] text-gray-600">
 
               <p>
                 KDC Trung Sơn, Bình Hưng
@@ -67,9 +67,9 @@ export default function InvoicePrint({
       </div>
 
       {/* CUSTOMER */}
-      <div className="mt-8 rounded-2xl border border-gray-300 p-5">
+      <div className="mt-7 rounded-xl border border-black p-4">
 
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-widest">
+        <h3 className="mb-3 text-[15px] font-bold uppercase"> font-bold uppercase tracking-widest">
           Thông tin khách hàng
         </h3>
 
@@ -112,11 +112,11 @@ export default function InvoicePrint({
       {/* PRODUCTS */}
 <div className="mt-8">
 
-  <table className="w-full border-collapse">
+  <table className="w-full table-fixed border-collapse">
 
     <thead>
 
-      <tr className="border-b-2 border-black">
+      <tr className="h-11 border-y-2 border-black bg-gray-100">
 
         <th className="pb-3 text-left text-[11px] font-bold uppercase tracking-widest">
           STT
@@ -280,7 +280,7 @@ export default function InvoicePrint({
           </li>
 
           <li>
-            • Hỗ trợ đổi trả trong 07 ngày nếu lỗi sản xuất.
+            • Hỗ trợ đổi trả trong 15 ngày nếu lỗi sản xuất.
           </li>
 
           <li>

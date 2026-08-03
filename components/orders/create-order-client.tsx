@@ -99,6 +99,10 @@ const [customerPhone, setCustomerPhone] =
 const [customerAddress, setCustomerAddress] =
   useState('')
 
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
+
+const [discountValue, setDiscountValue] = useState(0)
+
 
 useEffect(() => {
 
@@ -143,10 +147,8 @@ useEffect(() => {
 ])
 
 const [shippingFee, setShippingFee] =
-  useState(30000)
+  useState(35000)
 
-  const [discountAmount, setDiscountAmount] =
-    useState(0)
   
   const [orderNote, setOrderNote] = useState('')
   const [showAllProducts, setShowAllProducts] =
@@ -300,11 +302,20 @@ const [shippingFee, setShippingFee] =
     const removeLine = (id: string) =>
       setCart((prev) => prev.filter((l) => l.product.id !== id))
 
-    const subtotal = cart.reduce((s, l) => s + l.price * l.quantity, 0)
-    const total =
-      subtotal -
-      discountAmount +
-      shippingFee
+   const subtotal = cart.reduce(
+  (s, l) => s + l.price * l.quantity,
+  0
+)
+
+const discountAmount =
+  discountType === 'percent'
+    ? Math.round(subtotal * discountValue / 100)
+    : discountValue
+
+const total =
+  subtotal -
+  discountAmount +
+  shippingFee
 
     const findCustomer = async (
   keyword: string
@@ -632,7 +643,7 @@ product_name:
 
 <div className="lg:col-span-8 flex flex-col gap-4">
 
-            <div className="mb-4">
+            <div >
 
               <div className="mb-4 flex gap-3">
 
@@ -657,7 +668,7 @@ product_name:
     }
     className="
       w-full
-      rounded-x1
+      rounded-md
       border
       border-slate-700
       bg-slate-900
@@ -678,7 +689,7 @@ product_name:
                   }
                   className="
       w-64
-      rounded-xl
+      rounded-md
       border
       border-slate-700
       bg-slate-900
@@ -767,11 +778,12 @@ product_name:
 
             </div>
 
-            <div
+       <div
   className="
+    -mt-2
     h-[420px]
     overflow-y-auto
-    rounded-xl
+    rounded-md
     border
     border-slate-800
     custom-scroll
@@ -806,11 +818,11 @@ product_name:
     </div>
 
     <div className="col-span-2 text-center">
-      Số lượng
+      SL
     </div>
 
     <div className="col-span-1 text-center">
-      Thêm sản phẩm
+      Thêm SP
     </div>
   </div>
 
@@ -841,7 +853,7 @@ product_name:
   className="
     h-16
     w-16
-    rounded-lg
+    rounded-md
     object-cover
   "
 />
@@ -914,7 +926,7 @@ product_name:
     className="
       h-10
       w-10
-      rounded-lg
+      rounded-md
       bg-cyan-500
       text-white
       hover:bg-cyan-400
@@ -937,7 +949,7 @@ product_name:
 <div
  className="
 mt-3
-rounded-lg
+rounded-md
 border
 border-slate-800
 bg-slate-900/50
@@ -960,7 +972,7 @@ p-3
     <button
       onClick={() => setCart([])}
       className="
-        rounded-lg
+        rounded-md
         border
         border-red-500/40
         px-3
@@ -994,7 +1006,7 @@ p-3
     flex
     items-center
     justify-between
-    rounded-xl
+    rounded-md
     border
     border-slate-800
     p-3
@@ -1011,7 +1023,7 @@ p-3
       className="
         h-16
         w-16
-        rounded-lg
+        rounded-md
         object-cover
       "
     />
@@ -1120,9 +1132,9 @@ p-3
         
       ))}
 
-      <div className="mt-4 border-t pt-4">
+      <div className="mt-2 border-t pt-2">
 
-        <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+        <div className="mt-2 flex justify-between text-[17px] font-semibold">
           <span>Tạm tính</span>
           <span>
             {subtotal.toLocaleString('vi-VN')} đ
@@ -1150,6 +1162,18 @@ p-3
 
 <div className="lg:col-span-4">
 
+  <div
+    className="
+      rounded-lg
+      border
+      border-slate-800
+      bg-slate-900
+      p-5
+      shadow-lg
+    "
+    style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+  >
+
   <div className="space-y-4">
               <h2 className="mb-3 text-1xl font-bold">
   Thông Tin Khách hàng
@@ -1168,12 +1192,12 @@ p-3
     }
     className="
       w-full
-      rounded-x1
+      rounded-md
       border
       border-cyan-700
       bg-slate-900
-      py-1
-      px-2
+      py-2
+      px-3
       text-cyan-400
       font-semibold
       placeholder:text-cyan-500/70
@@ -1224,7 +1248,7 @@ p-3
     className="
       mt-2
       w-full
-      rounded-x1
+      rounded-md
       border
       border-slate-700
       bg-slate-900
@@ -1258,7 +1282,7 @@ p-3
     className="
       mt-2
       w-full
-      rounded-x1
+      rounded-md
       border
       border-slate-700
       bg-slate-900
@@ -1270,7 +1294,7 @@ p-3
 
 </div>
 
-              <div className="relative">
+              <div className="relative mb-5">
 
   <MapPin
     size={15}
@@ -1292,7 +1316,7 @@ p-3
     className="
       mt-2
       w-full
-      rounded-x1
+      rounded-md
       border
       border-slate-700
       bg-slate-900
@@ -1308,7 +1332,10 @@ p-3
 
 {/* PAYMENT */}
 
-<div className="lg:col-span-3 min-w-[320px]">
+<div
+  className="rounded-md border border-slate-700 bg-slate-900 p-5"
+  style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+>
   
   <div className="space-y-2">
 
@@ -1318,21 +1345,56 @@ p-3
 
     {/* Giảm giá */}
 
-    <div>
-      <label className="text-xs text-slate-400">
-        Giảm giá
-      </label>
+   <div>
 
-      <input
-        type="number"
-        value={discountAmount}
-        onChange={(e) =>
-          setDiscountAmount(Number(e.target.value))
-        }
-        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
-      />
-    </div>
+  <label className="text-xs text-slate-400">
+    Giảm giá
+  </label>
 
+  <div className="mt-1 flex gap-2">
+
+    <input
+      type="number"
+      value={discountValue}
+      onChange={(e) =>
+        setDiscountValue(Number(e.target.value))
+      }
+      placeholder="0"
+      className="
+        flex-1
+        rounded-md
+        border
+        border-slate-700
+        bg-slate-900
+        px-3
+        py-2
+      "
+    />
+
+    <select
+      value={discountType}
+      onChange={(e) =>
+        setDiscountType(
+          e.target.value as 'amount' | 'percent'
+        )
+      }
+      className="
+        w-24
+        rounded-md
+        border
+        border-slate-700
+        bg-slate-900
+        px-3
+        py-2
+      "
+    >
+      <option value="amount">VNĐ</option>
+      <option value="percent">%</option>
+    </select>
+
+  </div>
+
+</div>
     {/* Ship */}
 
     <div>
@@ -1346,7 +1408,7 @@ p-3
         onChange={(e) =>
           setShippingFee(Number(e.target.value))
         }
-        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
       />
     </div>
 
@@ -1362,7 +1424,7 @@ p-3
         onChange={(e) =>
           setPaymentMethod(e.target.value)
         }
-        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
       >
         <option value="cash">Tiền mặt</option>
         <option value="bank">Chuyển khoản</option>
@@ -1383,7 +1445,7 @@ p-3
         onChange={(e) =>
           setShippingProvider(e.target.value)
         }
-        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
       >
         <option value="GHN">GHN</option>
         <option value="GHTK">GHTK</option>
@@ -1404,14 +1466,13 @@ p-3
     onChange={(e) =>
       setPaidAmount(Number(e.target.value))
     }
-    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
   />
 </div>
 
 {/* TOTAL */}
 
-<div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-
+<div className="mt-6 rounded-md border border-slate-800 bg-slate-900/40 p-4">
   <div className="flex justify-between">
     <span>Tạm tính</span>
     <span>
@@ -1454,7 +1515,7 @@ p-3
     className="
       mt-6
       w-full
-      rounded-xl
+      rounded-md
       bg-cyan-500
       py-4
       text-lg
@@ -1472,21 +1533,34 @@ p-3
 </div>
 
        </div> 
+        
         {showConfirm && (
 
-         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+<div
+  className="
+    fixed
+    inset-0
+    z-[9999]
+    flex
+    items-center
+    justify-center
+    bg-black/70
+    p-4
+  "
+>
 
-  <div
-    className="
-      w-[420px]
+ <div
+  className="
+      w-full
+      max-w-[420px]
       rounded-2xl
       border
       border-slate-700
       bg-slate-950
       p-5
       shadow-2xl
-    "
-  >
+"
+>
 
     <h2 className="mb-2 text-center text-xl font-semibold">
       Xác nhận tạo đơn
@@ -1511,7 +1585,7 @@ p-3
                   }
                   className="
 flex-1
-rounded-lg
+rounded-md
 border
 border-slate-600
 bg-slate-800
@@ -1531,7 +1605,7 @@ hover:bg-slate-700
                   }}
                   className="
 flex-1
-rounded-lg
+rounded-md
 bg-cyan-500
 py-2.5
 text-sm
@@ -1555,11 +1629,20 @@ hover:bg-cyan-600
 
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
 
-            <div className="w-[760px]
-rounded-xl
-bg-white
-p-10
-text-black">
+        <div
+  className="
+    w-[760px]
+    rounded-md
+    bg-white
+    p-10
+    text-black
+  "
+  style={{
+   fontFamily: 'Arial, Helvetica, sans-serif',
+  fontSize: '15px',
+  lineHeight: '1.5',
+}}
+>
 
               {/* HEADER */}
 
@@ -1580,7 +1663,7 @@ text-black">
                   </div>
 
                   <div>
-                    Website: Olivelivingvn.com
+                    Email: olivelivingvn@gmail.com
                   </div>
 
                 </div>
@@ -1599,7 +1682,10 @@ text-black">
 
               {/* ORDER INFO */}
 
-<div className="mt-2 flex justify-between border-b pb-3 text-xs">
+<div
+  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[13px] leading-5"
+  style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+>
 
   <div>
     <strong>Mã đơn:</strong> DH{Date.now()}
@@ -1610,55 +1696,64 @@ text-black">
     {new Date().toLocaleDateString('vi-VN')}
   </div>
 
+  <div>
+      <strong>Mã KH:</strong> {customerCode}
+    </div>
+
 </div>
 
 {/* CUSTOMER INFO */}
 
-<div className="mt-3 rounded border p-2 text-[15px] leading-5">
-
+<div
+  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[13px] leading-5"
+  style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+>
   <div className="mb-1 font-bold border-b pb-1">
-    THÔNG TIN ĐƠN HÀNG
+    THÔNG TIN KHÁCH HÀNG
   </div>
 
   <div className="grid grid-cols-2 gap-x-6">
 
-    <div>
-      <strong>Mã KH:</strong> {customerCode}
+   <div>
+      <strong>Khách Hàng:</strong> {customerName}
     </div>
+
+    <div className="mt-1">
+  <strong>Địa chỉ:</strong> {customerAddress}
+</div>
+
+     <div>
+      <strong>SĐT:</strong> {customerPhone}
+    </div>
+
 
     <div>
       <strong>ĐVVC:</strong> {shippingProvider}
     </div>
 
-    <div>
-      <strong>Khách:</strong> {customerName}
-    </div>
 
     <div>
-      <strong>Thanh toán:</strong> {paymentMethod}
+      <strong>Thanh Toán:</strong> {paymentMethod}
     </div>
 
-    <div>
-      <strong>SĐT:</strong> {customerPhone}
-    </div>
+   
 
     <div>
-      <strong>Đã thanh toán:</strong>{' '}
+      <strong>Đã Thanh Toán:</strong>{' '}
       {paidAmount.toLocaleString('vi-VN')} đ
     </div>
 
   </div>
 
-  <div className="mt-1">
-  <strong>Địa chỉ:</strong> {customerAddress}
-</div>
 
 </div>
 
 {/* PRODUCTS */}
 
-<table className="mt-3 w-full border-collapse text-[14px]">
-
+<table
+  className="mt-3 w-full border-collapse text-[14px]"
+  style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+>
   <thead>
 
     <tr className="border-b">
@@ -1738,24 +1833,24 @@ text-black">
 
 {/* TOTAL */}
 
-<div className="mt-3 ml-auto w-[300px] p-1 text-[12px]">
+<div className="mt-3 ml-auto w-[320px] p-1 text-[16px]">
 
-  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+  <div className="mt-2 flex justify-between text-[15px] font-semibold">
     <span>Tạm tính</span>
     <span>{subtotal.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+  <div className="mt-2 flex justify-between text-[14px] font-normal">
     <span>Giảm giá</span>
     <span>{discountAmount.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+ <div className="mt-2 flex justify-between text-[14px] font-normal">
     <span>Phí ship</span>
     <span>{shippingFee.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 flex justify-between text-1xl font-bold text-white-400">
+ <div className="mt-2 flex justify-between text-[14px] font-normal">
     <span>Đã Thanh Toán</span>
     <span>{paidAmount.toLocaleString('vi-VN')} đ</span>
   </div>
@@ -1778,83 +1873,41 @@ text-black">
 
 </div>
 
-            
-              <div className="mt-4 rounded-lg border bg-gray-50 p-3 text-[14px] leading-4">
+          
+          <div
+  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[13px] leading-5"
+  style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+>
 
-                <div className="mb-3 text-center font-bold">
-                  CHÍNH SÁCH KIỂM TRA & ĐỔI TRẢ
-                </div>
+  <div className="mb-2 text-center text-[15px] font-bold">
+    CHÍNH SÁCH KIỂM TRA & ĐỔI TRẢ
+  </div>
 
-                <p>
-                  Khách hàng được kiểm tra hàng trước khi thanh toán.
-                </p>
+  <p className="mb-1 font-semibold">
+    Hỗ trợ đổi trả trong vòng 15 ngày nếu:
+  </p>
 
-                <p className="mt-2 font-semibold">
-                  Hỗ trợ đổi trả trong vòng 15 ngày nếu:
-                </p>
+  <ul className="mb-2 ml-5 list-disc leading-5">
+    <li>Sản phẩm giao sai mẫu, sai màu.</li>
+    <li>Sản phẩm bị lỗi do nhà sản xuất.</li>
+    <li>Sản phẩm hư hỏng trong quá trình vận chuyển.</li>
+  </ul>
 
-                <ul className="ml-4 list-disc">
+  <p className="mb-1 font-semibold text-red-600">
+    Không áp dụng đổi trả:
+  </p>
 
-                  <li>Sản phẩm giao sai mẫu, sai màu.</li>
+  <ul className="ml-5 list-disc leading-5">
+    <li>Sản phẩm sử dụng sai cách.</li>
+    <li>Khách đổi ý sau khi nhận đúng sản phẩm.</li>
+    <li>Sản phẩm đã qua sử dụng hoặc bị tác động.</li>
+  </ul>
 
-                  <li>Sản phẩm bị lỗi do nhà sản xuất.</li>
+  <div className="mt-3 rounded border bg-blue-50 px-3 py-2 text-[13px] text-blue-700">
+    Liên hệ <strong>079 937 9179</strong> để được hỗ trợ về vận đơn và thông tin đơn hàng
+  </div>
 
-                  <li>Sản phẩm hư hỏng trong quá trình vận chuyển.</li>
-
-                </ul>
-
-                <p className="mt-2 font-semibold text-red-600">
-                  Không áp dụng đổi trả:
-                </p>
-
-                <ul className="ml-4 list-disc">
-
-                  <li>Sản phẩm sử dụng sai cách.</li>
-
-                  <li>Khách đổi ý sau khi nhận đúng sản phẩm.</li>
-
-                  <li>Sản phẩm đã qua sử dụng hoặc bị tác động.</li>
-
-                </ul>
-
-                <div className="mt-2 rounded border bg-blue-50 p-2 text-blue-700">
-
-                  Liên hệ ZALO 079 937 9179 để được hỗ trợ.
-       
-
-                </div>
-
-              </div>
-
-              {/* SIGN */}
-
-              <div className="mt-5 grid grid-cols-2 text-center text-[11px]">
-
-                <div>
-
-                  <div className="font-semibold">
-                    Người bán
-                  </div>
-
-                  <div className="mt-12 text-gray-500">
-                    (Ký và ghi rõ họ tên)
-                  </div>
-
-                </div>
-
-                <div>
-
-                  <div className="font-semibold">
-                    Khách hàng
-                  </div>
-
-                  <div className="mt-12 text-gray-500">
-                    (Ký và ghi rõ họ tên)
-                  </div>
-
-                </div>
-
-              </div>
+</div>
 
               {/* BUTTONS */}
 
@@ -1862,23 +1915,24 @@ text-black">
 
                 <button
                   onClick={() => window.print()}
-                  className="flex-1 rounded-lg bg-green-500 py-3 font-bold text-white"
+                  className="flex-1 rounded-md bg-green-500 py-3 font-bold text-white"
                 >
                   🖨 In hóa đơn
                 </button>
 
                 <button
                   onClick={() => setShowPrint(false)}
-                  className="flex-1 rounded-lg bg-slate-300 py-3 font-bold"
+                  className="flex-1 rounded-md bg-slate-300 py-3 font-bold"
                 >
                   Đóng
                 </button>
 </div>
               </div>
             </div>
+            
        
         )}
-
+</div>
       </>
 
     )
