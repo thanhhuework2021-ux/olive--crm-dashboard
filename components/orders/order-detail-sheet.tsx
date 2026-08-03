@@ -459,11 +459,9 @@ overflow-hidden
 </div>
 </div>
 
-{/* 
 <div className="hidden">
   <InvoicePrint order={order} />
 </div>
-*/}
 
 <div
   className="

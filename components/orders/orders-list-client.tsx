@@ -145,44 +145,31 @@ console.log(data?.[0])
       return false
     }
 
-    if (fromDate) {
+  if (fromDate) {
 
-      const orderDate =
-        new Date(o.created_at)
+  const orderDate = new Date(o.created_at)
 
-      const startDate =
-        new Date(fromDate)
+  const startDate = new Date(fromDate)
+  startDate.setHours(0, 0, 0, 0)
 
-      if (
-        orderDate < startDate
-      ) {
-        return false
-      }
+  if (orderDate.getTime() < startDate.getTime()) {
+    return false
+  }
 
-    }
+}
 
-    if (toDate) {
+if (toDate) {
 
-      const orderDate =
-        new Date(o.created_at)
+  const orderDate = new Date(o.created_at)
 
-      const endDate =
-        new Date(toDate)
+  const endDate = new Date(toDate)
+  endDate.setHours(23, 59, 59, 999)
 
-      endDate.setHours(
-        23,
-        59,
-        59,
-        999
-      )
+  if (orderDate.getTime() > endDate.getTime()) {
+    return false
+  }
 
-      if (
-        orderDate > endDate
-      ) {
-        return false
-      }
-
-    }
+}
 
     return true
 
