@@ -115,12 +115,14 @@ useEffect(() => {
   }
 
   const lastName =
-    customerName
-      .trim()
-      .split(' ')
-      .pop()
-      ?.substring(0, 2)
-      .toUpperCase() || 'KH'
+  customerName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .split(' ')
+    .pop()
+    ?.substring(0, 2)
+    .toUpperCase() || 'KH'
 
   const last4Phone =
     customerPhone
@@ -137,9 +139,9 @@ useEffect(() => {
     String(now.getMonth() + 1)
       .padStart(2, '0')
 
-  setCustomerCode(
-    `KH-${lastName}-${last4Phone}-${dd}${mm}`
-  )
+setCustomerCode(
+  `KH ${lastName}-${last4Phone}-${dd}${mm}`
+)
 
 }, [
   customerName,
@@ -374,10 +376,19 @@ const total =
         return
       }
 
-      const orderCode =
-        'DH' + Date.now()
+const now = new Date()
 
-      let customerId = null
+const yy = String(now.getFullYear()).slice(-2)
+const mm = String(now.getMonth() + 1).padStart(2, '0')
+const dd = String(now.getDate()).padStart(2, '0')
+
+const totalK = Math.round(total / 1000)
+
+const serial = Date.now().toString().slice(-4)
+
+const orderCode = `DHOL-${yy}${mm}${dd}-${totalK}-${serial}`
+
+let customerId: string | null = null
 
       const { data: existingCustomer } =
         await supabase
@@ -417,8 +428,7 @@ const mm =
     .padStart(2, '0')
 
 const customerCode =
-  `KH-${lastName}-${last4Phone}-${dd}${mm}`
-        
+`KH${dd}${mm}${lastName}${last4Phone}`     
         const {
           data: newCustomer,
           error: customerError,
