@@ -1580,7 +1580,7 @@ text-black">
                   </div>
 
                   <div>
-                    Email: olivelivingvn@gmail.com
+                    Website: Olivelivingvn.com
                   </div>
 
                 </div>
@@ -1790,7 +1790,7 @@ text-black">
                 </p>
 
                 <p className="mt-2 font-semibold">
-                  Hỗ trợ đổi trả trong vòng 07 ngày nếu:
+                  Hỗ trợ đổi trả trong vòng 15 ngày nếu:
                 </p>
 
                 <ul className="ml-4 list-disc">
@@ -1819,7 +1819,7 @@ text-black">
 
                 <div className="mt-2 rounded border bg-blue-50 p-2 text-blue-700">
 
-                  Liên hệ 079 937 9179 để được hỗ trợ.
+                  Liên hệ ZALO 079 937 9179 để được hỗ trợ.
        
 
                 </div>
