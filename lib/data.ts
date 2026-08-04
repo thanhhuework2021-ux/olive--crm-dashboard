@@ -122,11 +122,11 @@ export interface DebtRecord {
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   draft: 'Nháp',
   pending: 'Chờ xác nhận',
-  confirmed: 'Đã hoàn thành',
-  //packing: 'Đang đóng gói',
-  //shipping: 'Đang giao',
- // completed: 'Hoàn thành',
- // cancelled: 'Hủy',
+  confirmed: 'Đã xác nhận',
+  packing: 'Đang đóng gói',
+  shipping: 'Đang giao',
+  completed: 'Hoàn thành',
+  cancelled: 'Đã hủy',
 }
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {

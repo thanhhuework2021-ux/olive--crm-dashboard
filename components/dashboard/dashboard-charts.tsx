@@ -1,5 +1,7 @@
 'use client'
 
+import type { RevenueChartItem } from '@/lib/types/dashboard'
+
 import {
   Area,
   AreaChart,
@@ -29,10 +31,14 @@ const revenueConfig = {
   revenue: { label: 'Doanh thu', color: 'var(--chart-1)' },
 } satisfies ChartConfig
 
-export function RevenueAreaChart() {
+export function RevenueAreaChart({
+  data,
+}: {
+  data: RevenueChartItem[]
+}) {
   return (
     <ChartContainer config={revenueConfig} className="h-[260px] w-full">
-      <AreaChart data={revenueByDay} margin={{ left: 4, right: 8, top: 8 }}>
+      <AreaChart data={data} margin={{ left: 4, right: 8, top: 8 }}>
         <defs>
           <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.5} />
@@ -81,10 +87,14 @@ const ordersConfig = {
   orders: { label: 'Đơn hàng', color: 'var(--chart-1)' },
 } satisfies ChartConfig
 
-export function OrdersBarChart() {
+export function OrdersBarChart({
+  data,
+}: {
+  data: RevenueChartItem[]
+}) {
   return (
     <ChartContainer config={ordersConfig} className="h-[260px] w-full">
-      <BarChart data={revenueByDay} margin={{ left: 4, right: 8, top: 8 }}>
+      <BarChart data={data} margin={{ left: 4, right: 8, top: 8 }}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis
           dataKey="date"

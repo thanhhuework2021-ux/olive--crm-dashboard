@@ -24,13 +24,13 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  /*
+  
   {
     title: 'Tổng quan',
     url: '/',
     icon: LayoutDashboard,
   },
-*/
+
   {
     title: 'Đơn hàng',
     url: '/don-hang',
