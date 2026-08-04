@@ -70,38 +70,72 @@ useEffect(() => {
 }, [])
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 px-2 py-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
-        >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-            <Zap className="size-5" />
-          </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-lg font-bold leading-none tracking-tight">
-              NOVAVI
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              Quản lý bán hàng
-            </span>
-          </div>
-        </Link>
-      </SidebarHeader>
+    
+<Sidebar
+  collapsible="icon"
+  className="min-w-[290px] max-w-[290px]"
+>
 
-      <SidebarContent className="px-2">
-        <SidebarMenu>
+     <SidebarHeader className="border-b border-slate-800 px-5 py-5">
+  <Link
+    href="/"
+    className="flex items-center gap-4"
+  >
+    <div
+      className="
+      flex
+      h-12
+      w-12
+      items-center
+      justify-center
+      rounded-xl
+      bg-cyan-500
+      text-white
+      shadow-lg
+      shadow-cyan-500/20
+    "
+    >
+      <Zap className="h-6 w-6" />
+    </div>
+
+    <div>
+      <h2 className="text-2xl font-black tracking-wide">
+        OLIVE LIVING
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Quản lý bán hàng
+      </p>
+    </div>
+  </Link>
+</SidebarHeader>
+
+      <SidebarContent className="px-4 pt-6 pb-5">
+        <SidebarMenu className="space-y-3">
           {navItems.map((item) => {
             if (!item.items) {
               return (
                 <SidebarMenuItem key={item.url}>
+
                   <SidebarMenuButton
-                    render={<Link href={item.url} />}
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                  >
-                    <item.icon />
+  render={<Link href={item.url} />}
+  isActive={isActive(item.url)}
+  tooltip={item.title}
+className="
+min-h-[56px]
+rounded-xl
+px-5
+py-4
+text-base
+font-semibold
+gap-4
+transition-all
+duration-200
+hover:bg-slate-800
+"
+>
+
+                    <item.icon className="h-6 w-6 shrink-0" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -118,23 +152,72 @@ useEffect(() => {
 
                 <CollapsibleTrigger
                   render={
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      isActive={isParentActive(item)}
-                    />
-                  }
+  <SidebarMenuButton
+    tooltip={item.title}
+    isActive={isParentActive(item)}
+    className="
+      h-12
+      rounded-xl
+      px-4
+      text-base
+font-semibold
+      transition-all
+      duration-200
+      hover:bg-slate-800
+      hover:translate-x-1
+      data-[active=true]:bg-cyan-500/15
+      data-[active=true]:border
+      data-[active=true]:border-cyan-500/30
+      data-[active=true]:text-cyan-400
+      min-h-[56px]
+py-4
+gap-4
+    "
+  />
+}
                 >
-                  <item.icon />
+                  <item.icon className="h-6 w-6 shrink-0" />
                   <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[panel-open]/collapsible:rotate-90" />
+                 <ChevronRight
+  className="
+    ml-auto
+    h-4
+    w-4
+    text-slate-500
+    transition-transform
+    duration-200
+    group-data-[panel-open]/collapsible:rotate-90
+  "
+/>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenuSub>
+                  <SidebarMenuSub
+  className="
+    mt-3
+    ml-4
+    rounded-xl
+    border
+    border-slate-800
+    bg-slate-900/70
+    p-2
+    space-y-2
+  "
+>
                     {item.items.map((sub) => (
                       <SidebarMenuSubItem key={sub.url}>
                         <SidebarMenuSubButton
                           render={<Link href={sub.url} />}
                           isActive={pathname === sub.url}
+                          className="
+h-11
+rounded-lg
+px-4
+text-[15px]
+font-medium
+transition-all
+duration-200
+hover:bg-slate-800
+"
                         >
                           {sub.icon && <sub.icon />}
                           <span>{sub.title}</span>
@@ -150,10 +233,20 @@ useEffect(() => {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
+        <SidebarMenu className="space-y-3">
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className={cn('cursor-default')}>
-              <Avatar className="size-8 rounded-lg">
+           <SidebarMenuButton
+  size="lg"
+  className="
+    rounded-xl
+    border
+    border-slate-800
+    bg-slate-950
+    p-3
+    cursor-default
+  "
+>
+              <Avatar className="h-12 w-12 rounded-xl">
                 <AvatarFallback className="rounded-lg bg-primary/15 text-primary text-xs font-semibold">
                   
                 </AvatarFallback>
@@ -168,12 +261,26 @@ useEffect(() => {
               </div>
             </SidebarMenuButton>
             
-            <button
+           <button
   onClick={async () => {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }}
-  className="mt-2 w-full rounded-lg border border-red-500/20 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10"
+  className="
+mt-3
+h-11
+w-full
+rounded-xl
+border
+border-red-500/20
+bg-red-500/5
+text-sm
+font-semibold
+text-red-400
+transition-all
+duration-200
+hover:bg-red-500/15
+"
 >
   🚪 Đăng xuất
 </button>

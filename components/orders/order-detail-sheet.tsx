@@ -180,21 +180,66 @@ const loadPaymentHistory =
 
 <style>
 
-body{
-  background:white;
-  margin:0;
-  padding:0;
+@page{
+    size:A4 portrait;
+    margin:5mm;
 }
 
-@media print {
+html,
+body{
 
-  body{
+    width:210mm;
     margin:0;
-  }
+    padding:0;
+
+    background:#fff;
+
+    font-family:Arial, Helvetica, sans-serif;
+
+}
+
+#invoice-print{
+
+    width:200mm;
+
+    margin:0 auto;
+
+    transform:scale(0.94);
+
+    transform-origin:top center;
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+thead{
+
+    display:table-header-group;
+
+}
+
+tr{
+
+    page-break-inside:avoid;
+
+}
+
+td,
+th{
+
+    padding-top:4px;
+    padding-bottom:4px;
 
 }
 
 </style>
+
 
 </head>
 
@@ -206,11 +251,13 @@ ${printContents}
 
 window.onload = () => {
 
-  setTimeout(() => {
+    document.body.style.zoom = "92%"
 
-    window.print()
+    setTimeout(() => {
 
-  }, 300)
+        window.print()
+
+    },500)
 
 }
 

@@ -5,22 +5,26 @@ export default function InvoicePrint({
 }: {
   order: any
 }) {
+
+  const itemCount =
+  order.order_items?.length || 0
+
   return (
    <div
   id="invoice-print"
-  className="mx-auto w-[185mm] bg-white px-[8mm] py-[8mm] text-black"
+  className="mx-auto w-[180mm] bg-white px-[6mm] py-[6mm] text-black"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
 
-      {/* HEADER */}
+  
       {/* HEADER */}
 
-<div className="flex items-start justify-between border-b border-gray-300 pb-6">
+<div className="flex items-start justify-between border-b border-gray-300 pb-3">
 
   <div>
 
     <h1
-  className="text-[30px] font-bold tracking-[6px]"
+  className="text-[28px] font-bold tracking-[6px]"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   OLIVE LIVING
@@ -45,17 +49,17 @@ export default function InvoicePrint({
     </div>
 
     <h2
-  className="mt-1 text-[30px] font-bold tracking-wide"
+  className="mt-1 text-[28px] font-bold tracking-wide"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   HÓA ĐƠN
 </h2>
 
-    <div className="mt-4 inline-flex rounded-full border border-black px-4 py-2 text-[13px] font-bold">
+    <div className="mt-4 inline-flex rounded-full border border-black px-4 py-2 text-[12px] font-bold">
       {order.order_code}
     </div>
 
-    <div className="mt-3 text-[13px]">
+    <div className="mt-3 text-[12px]">
       {new Date(order.created_at).toLocaleDateString('vi-VN')}
     </div>
 
@@ -66,13 +70,13 @@ export default function InvoicePrint({
       {/* CUSTOMER */}
       {/* CUSTOMER */}
 
-<div className="mt-5 rounded-lg border border-gray-300 p-4">
+<div className="mt-3 rounded-lg border border-gray-300 p-2.5">
 
   <h3 className="mb-3 border-b border-gray-200 pb-2 text-[14px] font-bold uppercase tracking-wide">
     Thông tin khách hàng
   </h3>
 
-  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
+  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[12px]">
 
     <div>
       <span className="font-semibold">Họ tên:</span>{' '}
@@ -96,7 +100,7 @@ export default function InvoicePrint({
 
   </div>
 
-  <div className="mt-3 text-[13px]">
+  <div className="mt-3 text-[12px]">
 
     <span className="font-semibold">
       Địa chỉ:
@@ -109,7 +113,7 @@ export default function InvoicePrint({
 </div>
 
       {/* PRODUCTS */}
-<div className="mt-8">
+<div className="mt-4">
 
   <table className="w-full border-collapse">
 
@@ -159,10 +163,10 @@ THÀNH TIỀN
 
          <tr
   key={item.id}
-  className="border-b border-gray-300 text-[13px]"
+  className="border-b border-gray-300 text-[12px]"
 >
 
-<td className="py-3 text-center">
+<td className="py-2 text-center">
   {index + 1}
 </td>
 
@@ -207,11 +211,11 @@ THÀNH TIỀN
 
       {/* TOTAL */}
 
-<div className="mt-8 flex justify-end">
+<div className="mt-3 flex justify-end">
 
-  <div className="w-[290px] rounded-lg border border-gray-300 p-4">
+  <div className="w-[250px] rounded-lg border border-gray-300 p-2.5">
 
-    <div className="flex justify-between py-1 text-[13px] font-semibold">
+    <div className="flex justify-between py-1 text-[12px] font-semibold">
 
       <span>Tạm tính</span>
 
@@ -221,7 +225,7 @@ THÀNH TIỀN
 
     </div>
 
-    <div className="flex justify-between py-1 text-[13px]">
+    <div className="flex justify-between py-1 text-[12px]">
 
       <span>Giảm giá</span>
 
@@ -231,7 +235,7 @@ THÀNH TIỀN
 
     </div>
 
-    <div className="flex justify-between py-1 text-[13px]">
+    <div className="flex justify-between py-1 text-[12px]">
 
       <span>Phí vận chuyển</span>
 
@@ -241,7 +245,7 @@ THÀNH TIỀN
 
     </div>
 
-    <div className="flex justify-between py-1 text-[13px] text-green-700">
+    <div className="flex justify-between py-1 text-[12px] text-green-700">
 
       <span>Đã thanh toán</span>
 
@@ -253,7 +257,7 @@ THÀNH TIỀN
 
     <div className="my-3 border-t border-black" />
 
-    <div className="flex justify-between py-1 text-[13px] font-semibold">
+    <div className="flex justify-between py-1 text-[12px] font-semibold">
 
       <span>Tổng cần thanh toán</span>
 
@@ -271,20 +275,18 @@ THÀNH TIỀN
 
   </div>
 
-</div>
-
-      {/* POLICY */}
-  
+</div>  
 
 {/* POLICY */}
 
-<div className="mt-8 rounded-lg border border-gray-400 p-4">
+
+<div className="mt-3 rounded-lg border border-gray-400 p-2.5">
 
   <h3 className="mb-3 text-center text-[15px] font-bold uppercase">
     CHÍNH SÁCH KIỂM TRA & ĐỔI TRẢ
   </h3>
 
-  <div className="text-[13px] leading-6">
+  <div className="text-[12px] leading-5">
 
     <p className="font-semibold">
       Hỗ trợ đổi trả trong vòng 15 ngày nếu:
@@ -324,7 +326,39 @@ THÀNH TIỀN
 
 </div>
 
+
     </div>      
+
+    
   
   )
+
+  
 }
+
+<style jsx global>{`
+@page {
+  size: A4;
+  margin: 6mm;
+}
+
+@media print {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  #invoice-print {
+    width: 180mm;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}
+`}</style>

@@ -1,5 +1,6 @@
 'use client'
 import { Switch } from '@/components/ui/switch'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Plus, Search, Filter, Download } from 'lucide-react'
@@ -43,6 +44,8 @@ import { formatVND, formatDateTime } from '@/lib/format'
 
 
 export function OrdersListClient() {
+
+  const router = useRouter()
   
 const [query, setQuery] = useState('')
 const [status, setStatus] = useState<string>('all')
@@ -184,6 +187,10 @@ if (toDate) {
   toDate,
 ])
 
+const activeOrders = filtered.filter(
+  (o) => o.status !== 'cancelled'
+)
+
   const totalPages = Math.ceil(
   filtered.length /
     ITEMS_PER_PAGE
@@ -201,6 +208,14 @@ const paginatedOrders =
     setSelected(o)
     setOpen(true)
   }
+
+const duplicateOrder = (order: any) => {
+
+  router.push(
+    `/don-hang/tao-moi?mode=duplicate&id=${order.id}`
+  )
+
+}
 
   const totalRevenue =
   filtered.reduce(
@@ -266,9 +281,11 @@ const unpaidRevenue =
       <p className="text-sm text-slate-400">
         Tổng đơn
       </p>
+
       <h2 className="mt-2 text-3xl font-bold">
-        {filtered.length}
-      </h2>
+  {activeOrders.length}
+</h2>
+
     </CardContent>
   </Card>
 
@@ -278,14 +295,17 @@ const unpaidRevenue =
         Tổng giá trị
       </p>
       <h2 className="mt-2 text-3xl font-bold">
-        {formatVND(
-          filtered.reduce(
-            (sum, o) =>
-              sum + Number(o.total_amount || 0),
-            0
-          )
-        )}
+
+       {formatVND(
+  activeOrders.reduce(
+    (sum, o) =>
+      sum + Number(o.total_amount || 0),
+    0
+  )
+)}
+
       </h2>
+
     </CardContent>
   </Card>
 
@@ -294,21 +314,20 @@ const unpaidRevenue =
       <p className="text-sm text-green-400">
         Đã thu
       </p>
+
       <h2 className="mt-2 text-3xl font-bold text-green-400">
-        {formatVND(
-          filtered
-            .filter(
-              (o) =>
-                o.payment_status === 'paid'
-            )
-            .reduce(
-              (sum, o) =>
-                sum +
-                Number(o.total_amount || 0),
-              0
-            )
-        )}
+       
+    {formatVND(
+  activeOrders.reduce(
+    (sum, o) =>
+      sum +
+      Number(o.paid_amount || 0),
+    0
+  )
+)}
+
       </h2>
+
     </CardContent>
   </Card>
 
@@ -318,21 +337,18 @@ const unpaidRevenue =
         Công nợ
       </p>
       <h2 className="mt-2 text-3xl font-bold text-red-400">
+
         {formatVND(
-          filtered
-            .filter(
-              (o) =>
-                o.payment_status ===
-                'unpaid'
-            )
-            .reduce(
-              (sum, o) =>
-                sum +
-                Number(o.total_amount || 0),
-              0
-            )
-        )}
+  activeOrders.reduce(
+    (sum, o) =>
+      sum +
+      Number(o.remaining_amount || 0),
+    0
+  )
+)}
+
       </h2>
+
     </CardContent>
   </Card>
 
@@ -720,19 +736,40 @@ const unpaidRevenue =
                       )}
                     </TableCell>
 
-                   <TableCell>
-  <button
-  className="
-    flex
-    items-center
-    gap-2
-    text-cyan-400
-    hover:text-cyan-300
-  "
+                   <TableCell
+  onClick={(e)=>e.stopPropagation()}
 >
-  👁
-  Xem
+
+<div className="flex items-center gap-2">
+
+<button
+onClick={()=>openOrder(o)}
+className="
+rounded-lg
+px-3
+py-1.5
+text-cyan-400
+hover:bg-cyan-500/10
+"
+>
+👁 Xem
 </button>
+
+<button
+onClick={()=>duplicateOrder(o)}
+className="
+rounded-lg
+px-3
+py-1.5
+text-yellow-400
+hover:bg-yellow-500/10
+"
+>
+📄 Copy
+</button>
+
+</div>
+
 </TableCell>
 
                   </TableRow>

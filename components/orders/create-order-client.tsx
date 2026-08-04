@@ -1,5 +1,5 @@
 'use client'
-
+import Image from "next/image"
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useMemo, useState } from 'react'
@@ -61,7 +61,15 @@ interface CartLine {
   price: number
 }
 
-export function CreateOrderClient() {
+type CreateOrderClientProps = {
+  mode?: string
+  orderId?: string
+}
+
+export function CreateOrderClient({
+  mode,
+  orderId,
+}: CreateOrderClientProps) {
 
   const [paymentMethod, setPaymentMethod] =
   useState('COD')
@@ -92,6 +100,27 @@ const [paidAmount, setPaidAmount] =
 
  const [customerName, setCustomerName] =
   useState('')
+
+  const isEdit = mode === 'edit'
+
+const isDuplicate =
+  mode === 'duplicate'
+
+
+  useEffect(() => {
+  if (!orderId) return
+
+  loadOrder(orderId)
+}, [orderId])
+
+  useEffect(() => {
+  console.log({
+    mode,
+    orderId,
+    isEdit,
+    isDuplicate,
+  })
+}, [])
 
 const [customerPhone, setCustomerPhone] =
   useState('')
@@ -193,10 +222,15 @@ const [shippingFee, setShippingFee] =
   )
 })
 
-  useEffect(() => {
-    loadData()
-  }, [])
+useEffect(() => {
 
+  loadData()
+
+  if (orderId) {
+    loadOrder(orderId)
+  }
+
+}, [orderId])
   const displayedProducts =
     showAllProducts
       ? filteredProducts
@@ -218,6 +252,74 @@ const [shippingFee, setShippingFee] =
     setProductsData(products || [])
     setCustomersData(customers || [])
   }
+
+const loadOrder = async (id: string) => {
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      customers(*),
+      order_items(*)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error || !data) return
+
+  console.log('LOAD ORDER', data)
+
+  //=========================
+  // CUSTOMER
+  //=========================
+
+  setCustomerName(data.customers?.full_name || '')
+  setCustomerPhone(data.customers?.phone || '')
+  setCustomerAddress(data.customers?.address || '')
+  setCustomerCode(data.customers?.customer_display_code || '')
+
+  //=========================
+  // PAYMENT
+  //=========================
+
+  setShippingFee(data.shipping_fee || 0)
+
+  setPaymentMethod(data.payment_method || 'COD')
+
+  setPaidAmount(data.paid_amount || 0)
+
+  setShippingProvider(
+    data.shipping_provider || 'GHN'
+  )
+
+  setDiscountValue(data.discount || 0)
+
+  setDiscountType('amount')
+
+  //=========================
+  // CART
+  //=========================
+
+  const lines =
+    (data.order_items || []).map((item: any) => ({
+
+      product: {
+        id: item.product_id,
+        name: item.product_name,
+        sku: item.sku,
+        color: item.color,
+        image_url: item.image_url || '',
+        stock_quantity: 9999,
+      },
+
+      quantity: item.quantity,
+
+      price: item.sale_price,
+
+    }))
+
+  setCart(lines)
+}
 
   const matchedCustomers = useMemo(
     () =>
@@ -1609,10 +1711,22 @@ hover:bg-slate-700
                 </button>
 
                 <button
-                  onClick={() => {
-                    setShowConfirm(false)
-                    createOrder()
-                  }}
+
+onClick={() => {
+
+    setShowConfirm(false)
+
+    if (isEdit) {
+
+        updateOrder()
+
+    } else {
+
+        createOrder()
+
+    }
+
+}}
                   className="
 flex-1
 rounded-md
@@ -1639,61 +1753,86 @@ hover:bg-cyan-600
 
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
 
-        <div
+      <div
   className="
     w-[760px]
     rounded-md
     bg-white
-    p-10
+    p-8
     text-black
   "
   style={{
-   fontFamily: 'Arial, Helvetica, sans-serif',
-  fontSize: '15px',
-  lineHeight: '1.5',
-}}
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    fontSize: '12px',
+    lineHeight: '1.4',
+  }}
 >
+{/* HEADER */}
 
-              {/* HEADER */}
+<div className="flex items-start justify-between border-b border-black pb-4">
 
-              <div className="pt-2 text-center">
+  {/* LEFT */}
 
-                <h1 className="text-xl font-bold tracking-[3px]">
-                  OLIVE LIVING
-                </h1>
+  <div className="flex-1">
 
-                <div className="mt-2 text-[11px] leading-5 text-gray-600">
+    <h1
+      className="text-[26px] font-bold tracking-[3px]"
+      style={{
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }}
+    >
+      OLIVE LIVING
+    </h1>
 
-                  <div>
-                    Địa chỉ: KDC Trung Sơn, Xã Bình Hưng, Hồ Chí Minh
-                  </div>
+    <div
+      className="mt-3 text-[11px] leading-5 text-gray-700"
+      style={{
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }}
+    >
+      <div>Địa chỉ: KDC Trung Sơn, Xã Bình Hưng, Hồ Chí Minh</div>
 
-                  <div>
-                    Hotline: +84 79 937 9179
-                  </div>
+      <div>Hotline: +84 79 937 9179</div>
 
-                  <div>
-                    Email: olivelivingvn@gmail.com
-                  </div>
+      <div>Email: olivelivingvn@gmail.com</div>
 
-                </div>
+      <div>Website: oliveliving.vn</div>
+    </div>
 
-                <div className="mt-2 border-t pt-3">
+  </div>
 
-                  <h2 className="text-base font-bold uppercase">
-                    HÓA ĐƠN BÁN HÀNG
-                  </h2>
+  {/* RIGHT */}
 
-                </div>
+  <div className="ml-8 flex items-center justify-end">
 
-              </div>
+    <Image
+      src="/logo.png"
+      alt="Olive Living"
+      width={120}
+      height={120}
+      className="object-contain"
+    />
 
-            
+  </div>
 
+</div>
+
+
+
+<div className="py-5 text-center">
+
+    <h2 className="text-[22px] font-bold">
+        HÓA ĐƠN BÁN HÀNG
+    </h2>
+
+</div>
+
+              
+    
               {/* ORDER INFO */}
 
 <div
-  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[13px] leading-5"
+  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[11px] leading-4"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
 
@@ -1715,7 +1854,7 @@ hover:bg-cyan-600
 {/* CUSTOMER INFO */}
 
 <div
-  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[13px] leading-5"
+  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[11px] leading-4"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   <div className="mb-1 font-bold border-b pb-1">
@@ -1761,7 +1900,7 @@ hover:bg-cyan-600
 {/* PRODUCTS */}
 
 <table
-  className="mt-3 w-full border-collapse text-[14px]"
+  className="mt-3 w-full border-collapse text-[11px]"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   <thead>
@@ -1807,11 +1946,11 @@ hover:bg-cyan-600
         className="border-b"
       >
 
-        <td className="py-1">
+        <td className="py-[3px]">
           {item.product.sku}
         </td>
 
-        <td className="py-1">
+        <td className="py-[3px]">
           {item.product.name}
         </td>
 
@@ -1827,7 +1966,7 @@ hover:bg-cyan-600
           {item.price.toLocaleString('vi-VN')} đ
         </td>
 
-        <td className="py-1 text-right font-medium">
+        <td className="py-[3px] text-right font-medium">
           {(item.price * item.quantity).toLocaleString('vi-VN')} đ
         </td>
 
@@ -1843,24 +1982,24 @@ hover:bg-cyan-600
 
 {/* TOTAL */}
 
-<div className="mt-3 ml-auto w-[320px] p-1 text-[16px]">
+<div className="mt-3 ml-auto w-[280px] p-1 text-[11px]">
 
-  <div className="mt-2 flex justify-between text-[15px] font-semibold">
+  <div className="mt-2 flex justify-between text-[11px] font-semibold">
     <span>Tạm tính</span>
     <span>{subtotal.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 flex justify-between text-[14px] font-normal">
+  <div className="mt-2 flex justify-between text-[11px] font-normal">
     <span>Giảm giá</span>
     <span>{discountAmount.toLocaleString('vi-VN')} đ</span>
   </div>
 
- <div className="mt-2 flex justify-between text-[14px] font-normal">
+ <div className="mt-2 flex justify-between text-[11px] font-normal">
     <span>Phí ship</span>
     <span>{shippingFee.toLocaleString('vi-VN')} đ</span>
   </div>
 
- <div className="mt-2 flex justify-between text-[14px] font-normal">
+ <div className="mt-2 flex justify-between text-[11px] font-normal">
     <span>Đã Thanh Toán</span>
     <span>{paidAmount.toLocaleString('vi-VN')} đ</span>
   </div>
@@ -1885,20 +2024,20 @@ hover:bg-cyan-600
 
           
           <div
-  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[13px] leading-5"
+  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[11px] leading-4"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
 
-  <div className="mb-2 text-center text-[15px] font-bold">
+  <div className="mb-2 text-center text-[11px] font-bold">
     CHÍNH SÁCH KIỂM TRA & ĐỔI TRẢ
   </div>
 
   <p className="mb-1 font-semibold">
-    Hỗ trợ đổi trả trong vòng 15 ngày nếu:
+    Hỗ trợ đổi trả trong vòng 15 ngày miễn phí nếu:
   </p>
 
   <ul className="mb-2 ml-5 list-disc leading-5">
-    <li>Sản phẩm giao sai mẫu, sai màu.</li>
+    <li>SHOP giao sai mẫu, sai màu.</li>
     <li>Sản phẩm bị lỗi do nhà sản xuất.</li>
     <li>Sản phẩm hư hỏng trong quá trình vận chuyển.</li>
   </ul>
@@ -1913,7 +2052,7 @@ hover:bg-cyan-600
     <li>Sản phẩm đã qua sử dụng hoặc bị tác động.</li>
   </ul>
 
-  <div className="mt-3 rounded border bg-blue-50 px-3 py-2 text-[13px] text-blue-700">
+  <div className="mt-3 rounded border bg-blue-50 px-3 py-2 text-[11px] text-blue-700">
     Liên hệ <strong>079 937 9179</strong> để được hỗ trợ về vận đơn và thông tin đơn hàng
   </div>
 

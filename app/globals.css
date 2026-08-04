@@ -163,3 +163,38 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
 }
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
+@media print {
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  #invoice-print{
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    page-break-after:auto;
+  }
+
+  table{
+    page-break-inside:auto;
+  }
+
+  tr{
+    page-break-inside:avoid;
+  }
+
+  .avoid-break{
+    page-break-inside:avoid;
+    break-inside:avoid;
+  }
+
+}
