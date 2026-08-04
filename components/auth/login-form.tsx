@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const router = useRouter()
@@ -11,24 +11,29 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleLogin() {
-    setLoading(true)
+ async function handleLogin() {
+  const supabase = createClient();
 
-    const { error } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+  setLoading(true);
 
-    setLoading(false)
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (error) {
-      alert(error.message)
-      return
-    }
+  setLoading(false);
 
-    router.push('/')
+  console.log("SESSION:", data.session);
+  console.log("USER:", data.user);
+
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  router.replace("/");
+  router.refresh();
+}
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6">

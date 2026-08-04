@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { Search, Bell } from 'lucide-react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -30,6 +30,8 @@ const notifications = [
 ]
 
 export function AppHeader({ title }: { title: string }) {
+  const supabase = createClient();
+
   const [cmdOpen, setCmdOpen] = useState(false)
   
   const unreadCount = notifications.filter((n) => n.unread).length
@@ -148,9 +150,15 @@ useEffect(() => {
             <DropdownMenuItem>Cài đặt tài khoản</DropdownMenuItem>
             <DropdownMenuItem>Trợ giúp & Hỗ trợ</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
-              Đăng xuất
-            </DropdownMenuItem>
+            <DropdownMenuItem
+  className="text-destructive focus:text-destructive"
+  onClick={async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }}
+>
+  Đăng xuất
+</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
