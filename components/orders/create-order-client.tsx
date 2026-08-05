@@ -1,4 +1,5 @@
 'use client'
+
 import Image from "next/image"
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -1753,20 +1754,31 @@ hover:bg-cyan-600
 
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
 
-      <div
+    <div
+  id="invoice-print"
   className="
-    w-[760px]
+    mx-auto
+    w-full
+    max-w-[210mm]
     rounded-md
     bg-white
-    p-8
     text-black
   "
+  style={{
+    padding: "12mm",
+    minHeight: "297mm",
+    boxSizing: "border-box",
+    fontFamily: "Arial, Helvetica, sans-serif",
+    fontSize: "12px",
+    lineHeight: "1.4",
+  }}
+>
   style={{
     fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: '12px',
     lineHeight: '1.4',
   }}
->
+
 {/* HEADER */}
 
 <div className="flex items-start justify-between border-b border-black pb-4">

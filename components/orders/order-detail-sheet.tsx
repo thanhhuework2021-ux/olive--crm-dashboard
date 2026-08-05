@@ -200,13 +200,9 @@ body{
 
 #invoice-print{
 
-    width:200mm;
+    width:190mm;
 
     margin:0 auto;
-
-    transform:scale(0.94);
-
-    transform-origin:top center;
 
 }
 
@@ -251,13 +247,11 @@ ${printContents}
 
 window.onload = () => {
 
-    document.body.style.zoom = "92%"
-
     setTimeout(() => {
 
         window.print()
 
-    },500)
+    },300)
 
 }
 

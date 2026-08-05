@@ -1,0 +1,54 @@
+﻿@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+
+  html,
+  body {
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-print,
+  #invoice-print * {
+    visibility: visible;
+  }
+
+  #invoice-print {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 190mm;
+    min-height: 277mm;
+    padding: 12mm;
+    background: white;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}

@@ -10,27 +10,35 @@ export default function InvoicePrint({
   order.order_items?.length || 0
 
   return (
-   <div
+  <div
   id="invoice-print"
-  className="mx-auto w-[180mm] bg-white px-[6mm] py-[6mm] text-black"
-  style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+  className="mx-auto bg-white text-black print:shadow-none"
+  style={{
+    width: "190mm",
+    minHeight: "277mm",
+    margin: "0 auto",
+    padding: "10mm",
+    background: "#fff",
+    boxSizing: "border-box",
+    fontFamily: "Arial, Helvetica, sans-serif",
+  }}
 >
 
   
       {/* HEADER */}
 
-<div className="flex items-start justify-between border-b border-gray-300 pb-3">
+<div className="flex items-start justify-between border-b border-gray-300 pb-2">
 
   <div>
 
     <h1
-  className="text-[28px] font-bold tracking-[6px]"
+  className="text-[22px] font-bold tracking-[4px]"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   OLIVE LIVING
 </h1>
 
-    <div className="mt-2 space-y-0.5 text-[12px] text-gray-600">
+    <div className="mt-2 space-y-0.5 text-[10px] text-gray-600">
 
       <div>KDC Trung Sơn, Bình Hưng, TP.HCM</div>
 
@@ -161,11 +169,10 @@ THÀNH TIỀN
           index: number
         ) => (
 
-         <tr
+<tr
   key={item.id}
-  className="border-b border-gray-300 text-[12px]"
+  className="border-b border-gray-200 text-[11px]"
 >
-
 <td className="py-2 text-center">
   {index + 1}
 </td>
@@ -209,65 +216,72 @@ THÀNH TIỀN
 
 </div>
 
-      {/* TOTAL */}
+   <div className="mt-3 grid grid-cols-[1fr_220px] gap-4 items-stretch">
 
-<div className="mt-3 flex justify-end">
+  {/* ================= POLICY ================= */}
 
-  <div className="w-[250px] rounded-lg border border-gray-300 p-2.5">
+  <div className="flex h-full flex-col rounded-lg border border-gray-300 p-2">
 
-    <div className="flex justify-between py-1 text-[12px] font-semibold">
+    <div className="mb-2 text-[12px] font-bold uppercase">
+      Chính sách kiểm tra & đổi trả
+    </div>
 
+    <ul className="ml-4 list-disc space-y-1 text-[10px] leading-4">
+
+      <li>Đổi trong 15 ngày nếu giao sai hoặc lỗi từ nhà sản xuất.</li>
+
+      <li>Không áp dụng với sản phẩm đã qua sử dụng.</li>
+
+      <li>Hư hỏng do người dùng không được hỗ trợ đổi trả.</li>
+
+    </ul>
+
+    <div className="mt-2 rounded border bg-gray-50 p-2 text-[10px]">
+
+      Hotline hỗ trợ:
+      <strong> 0799 379 179</strong>
+
+    </div>
+
+  </div>
+
+  {/* ================= TOTAL ================= */}
+
+ <div className="flex h-full flex-col rounded-lg border border-gray-300 p-2">
+
+    <div className="flex justify-between py-1 text-[11px]">
       <span>Tạm tính</span>
-
-      <span>
-        {Number(order.subtotal || 0).toLocaleString('vi-VN')} đ
-      </span>
-
+      <span>{Number(order.subtotal || 0).toLocaleString("vi-VN")} đ</span>
     </div>
 
-    <div className="flex justify-between py-1 text-[12px]">
-
+    <div className="flex justify-between py-1 text-[11px]">
       <span>Giảm giá</span>
-
-      <span>
-        -{Number(order.discount || 0).toLocaleString('vi-VN')} đ
-      </span>
-
+      <span>-{Number(order.discount || 0).toLocaleString("vi-VN")} đ</span>
     </div>
 
-    <div className="flex justify-between py-1 text-[12px]">
-
-      <span>Phí vận chuyển</span>
-
-      <span>
-        {Number(order.shipping_fee || 0).toLocaleString('vi-VN')} đ
-      </span>
-
+    <div className="flex justify-between py-1 text-[11px]">
+      <span>Vận chuyển</span>
+      <span>{Number(order.shipping_fee || 0).toLocaleString("vi-VN")} đ</span>
     </div>
 
-    <div className="flex justify-between py-1 text-[12px] text-green-700">
-
+    <div className="flex justify-between py-1 text-[11px] text-green-700">
       <span>Đã thanh toán</span>
-
-      <span className="font-semibold">
-        {Number(order.paid_amount || 0).toLocaleString('vi-VN')} đ
-      </span>
-
+      <span>{Number(order.paid_amount || 0).toLocaleString("vi-VN")} đ</span>
     </div>
 
-    <div className="my-3 border-t border-black" />
+    <div className="my-2 border-t"></div>
 
-    <div className="flex justify-between py-1 text-[12px] font-semibold">
+     <div className="flex justify-between text-[13px] font-bold">
 
-      <span>Tổng cần thanh toán</span>
+      <span>Còn thanh toán</span>
 
-      <span className="text-[15px] text-green-700">
+      <span className="text-green-700">
 
         {Math.max(
           Number(order.total_amount || 0) -
           Number(order.paid_amount || 0),
           0
-        ).toLocaleString('vi-VN')} đ
+        ).toLocaleString("vi-VN")} đ
 
       </span>
 
@@ -275,57 +289,25 @@ THÀNH TIỀN
 
   </div>
 
-</div>  
-
-{/* POLICY */}
-
-
-<div className="mt-3 rounded-lg border border-gray-400 p-2.5">
-
-  <h3 className="mb-3 text-center text-[15px] font-bold uppercase">
-    CHÍNH SÁCH KIỂM TRA & ĐỔI TRẢ
-  </h3>
-
-  <div className="text-[12px] leading-5">
-
-    <p className="font-semibold">
-      Hỗ trợ đổi trả trong vòng 15 ngày nếu:
-    </p>
-
-    <ul className="mt-1 ml-5 list-disc">
-
-      <li>Sản phẩm giao sai mẫu, sai màu.</li>
-
-      <li>Sản phẩm bị lỗi do nhà sản xuất.</li>
-
-      <li>Sản phẩm hư hỏng trong quá trình vận chuyển.</li>
-
-    </ul>
-
-    <p className="mt-3 font-semibold text-red-600">
-      Không áp dụng đổi trả:
-    </p>
-
-    <ul className="mt-1 ml-5 list-disc">
-
-      <li>Sản phẩm sử dụng sai cách.</li>
-
-      <li>Khách đổi ý sau khi nhận đúng sản phẩm.</li>
-
-      <li>Sản phẩm đã qua sử dụng hoặc bị tác động.</li>
-
-    </ul>
-
-  </div>
-
-  <div className="mt-4 rounded border border-gray-400 bg-gray-50 px-3 py-2 text-[12px] text-gray-700">
-
-    Liên hệ <strong>0799 379 179</strong> để được hỗ trợ về vận đơn và thông tin đơn hàng.
-
-  </div>
-
 </div>
 
+{/* THANK YOU */}
+
+<div className="mt-4 border-t border-gray-300 pt-3 text-center">
+
+  <p className="text-[14px] font-semibold tracking-wide">
+    CẢM ƠN QUÝ KHÁCH!
+  </p>
+
+  <p className="mt-1 text-[11px] text-gray-600">
+    Olive Living chân thành cảm ơn Quý khách đã tin tưởng và lựa chọn sản phẩm của chúng tôi.
+  </p>
+
+  <p className="mt-1 text-[10px] text-gray-500">
+    Chúc Quý khách có những trải nghiệm tuyệt vời cùng Olive Living.
+  </p>
+
+</div>
 
     </div>      
 
@@ -336,29 +318,3 @@ THÀNH TIỀN
   
 }
 
-<style jsx global>{`
-@page {
-  size: A4;
-  margin: 6mm;
-}
-
-@media print {
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-  }
-
-  #invoice-print {
-    width: 180mm;
-  }
-
-  table {
-    page-break-inside: auto;
-  }
-
-  tr {
-    page-break-inside: avoid;
-  }
-}
-`}</style>
