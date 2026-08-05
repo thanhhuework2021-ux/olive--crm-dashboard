@@ -1,10 +1,26 @@
-﻿export function getDateRange(range: string) {
+﻿export function getDateRange(
+  range: string,
+  customFrom?: string,
+  customTo?: string
+) {
   const now = new Date()
 
   let from = new Date()
   let to = new Date()
 
+  if (
+  range === "custom" &&
+  customFrom &&
+  customTo
+) {
+  return {
+    from: new Date(customFrom),
+    to: new Date(customTo + "T23:59:59"),
+  }
+}
+
   switch (range) {
+    
     case "today":
       from.setHours(0, 0, 0, 0)
       break

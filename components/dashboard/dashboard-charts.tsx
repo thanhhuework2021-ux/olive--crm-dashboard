@@ -4,14 +4,17 @@ import type { RevenueChartItem } from '@/lib/types/dashboard'
 
 import {
   Area,
-  AreaChart,
-  Bar,
+  Line,
+  ComposedChart,
   BarChart,
+  Bar,
   CartesianGrid,
   XAxis,
   YAxis,
   Cell,
-} from 'recharts'
+} from "recharts";
+
+
 import {
   ChartContainer,
   ChartTooltip,
@@ -37,8 +40,19 @@ export function RevenueAreaChart({
   data: RevenueChartItem[]
 }) {
   return (
-    <ChartContainer config={revenueConfig} className="h-[260px] w-full">
-      <AreaChart data={data} margin={{ left: 4, right: 8, top: 8 }}>
+    <ChartContainer
+  config={revenueConfig}
+  className="mt-4 h-[300px] w-full"
+>
+      <ComposedChart
+  data={data}
+  margin={{
+    top: 28,
+    right: 12,
+    left: 4,
+    bottom: 10,
+  }}
+>
         <defs>
           <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.5} />
@@ -46,6 +60,7 @@ export function RevenueAreaChart({
           </linearGradient>
         </defs>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
+
         <XAxis
           dataKey="date"
           tickLine={false}
@@ -54,31 +69,91 @@ export function RevenueAreaChart({
           minTickGap={24}
           fontSize={11}
         />
+        
         <YAxis
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={compact}
-          width={40}
-          fontSize={11}
-        />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent
-              formatter={(value) => [
-                new Intl.NumberFormat('vi-VN').format(Number(value)) + ' ₫',
-                ' Doanh thu',
-              ]}
-            />
-          }
-        />
+  yAxisId="left"
+  tickFormatter={compact}
+  tickLine={false}
+  axisLine={false}
+  width={45}
+  fontSize={11}
+/>
+
+         <YAxis
+  yAxisId="right"
+  orientation="right"
+  tickLine={false}
+  axisLine={false}
+  width={35}
+  fontSize={11}
+/>
+
+      <ChartTooltip
+  cursor={{
+    stroke: "#3b82f6",
+    strokeDasharray: "4 4",
+  }}
+  content={
+    <ChartTooltipContent
+      formatter={(value, name) => {
+        if (name === "Doanh thu") {
+          return new Intl.NumberFormat("vi-VN").format(Number(value)) + " ₫"
+        }
+
+        if (name === "Đơn hàng") {
+          return `${value} đơn`
+        }
+
+        return String(value)
+      }}
+    />
+  }
+/>
+
         <Area
-          dataKey="revenue"
-          type="monotone"
-          fill="url(#fillRevenue)"
-          stroke="var(--color-revenue)"
-          strokeWidth={2}
-        />
-      </AreaChart>
+  yAxisId="left"
+  type="natural"
+  dataKey="revenue"
+  name="Doanh thu"
+  fill="url(#fillRevenue)"
+  stroke="var(--color-revenue)"
+  strokeWidth={3}
+
+  dot={{
+    r: 5,
+    fill: "var(--color-revenue)",
+    stroke: "#0f172a",
+    strokeWidth: 2,
+  }}
+
+  activeDot={{
+    r: 8,
+    fill: "#fff",
+    stroke: "var(--color-revenue)",
+    strokeWidth: 3,
+  }}
+/>
+
+<Line
+  yAxisId="right"
+  type="natural"
+  name="Đơn hàng"
+  dataKey="orders"
+  stroke="#22c55e"
+  strokeWidth={3}
+  dot={{
+    r: 4,
+    fill: "#22c55e",
+  }}
+  activeDot={{
+    r: 7,
+    fill: "#fff",
+    stroke: "#22c55e",
+    strokeWidth: 3,
+  }}
+/>
+
+      </ComposedChart>
     </ChartContainer>
   )
 }
@@ -126,7 +201,12 @@ export function BranchBarChart() {
         layout="vertical"
         margin={{ left: 8, right: 16 }}
       >
-        <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+        <CartesianGrid
+  vertical={false}
+  strokeDasharray="4 4"
+  stroke="rgba(255,255,255,.08)"
+/>
+
         <XAxis type="number" tickFormatter={compact} fontSize={11} axisLine={false} tickLine={false} />
         <YAxis
           type="category"
@@ -136,16 +216,32 @@ export function BranchBarChart() {
           axisLine={false}
           tickLine={false}
         />
+        
+
         <ChartTooltip
-          content={
-            <ChartTooltipContent
-              formatter={(value) => [
-                new Intl.NumberFormat('vi-VN').format(Number(value)) + ' ₫',
-                ' Doanh thu',
-              ]}
-            />
-          }
-        />
+  cursor={{
+    stroke: "#3b82f6",
+    strokeDasharray: "4 4",
+  }}
+  content={
+    <ChartTooltipContent
+      formatter={(value, name) => {
+
+        if (name === "revenue") {
+          return [
+            new Intl.NumberFormat("vi-VN").format(Number(value)) + " ₫",
+            "Doanh thu",
+          ]
+        }
+
+        return [`${value} đơn`, null]
+
+      }}
+    />
+  }
+/>
+
+
         <Bar dataKey="revenue" radius={[0, 6, 6, 0]}>
           {revenueByBranch.map((_, i) => (
             <Cell key={i} fill={branchColors[i % branchColors.length]} />

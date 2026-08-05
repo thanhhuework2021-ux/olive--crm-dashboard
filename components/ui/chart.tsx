@@ -191,7 +191,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
+        "grid min-w-[220px] items-start gap-2 rounded-xl border border-border/50 bg-background px-3 py-2 text-sm shadow-xl",
         className
       )}
     >
@@ -212,9 +212,19 @@ function ChartTooltipContent({
                   indicator === "dot" && "items-center"
                 )}
               >
+
                 {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
-                ) : (
+  <div className="flex w-full items-center justify-between">
+    <span className="text-muted-foreground">
+      {itemConfig?.label ?? item.name}
+    </span>
+
+    <span className="font-semibold">
+      {formatter(item.value, item.name, item, index, item.payload)}
+    </span>
+  </div>
+) : (
+
                   <>
                     {itemConfig?.icon ? (
                       <itemConfig.icon />

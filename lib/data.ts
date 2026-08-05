@@ -3,8 +3,7 @@
 export type OrderStatus =
   | 'draft'
   | 'pending'
-  | 'confirmed'
-  | 'packing'
+  | 'processing'
   | 'shipping'
   | 'completed'
   | 'cancelled'
@@ -122,8 +121,7 @@ export interface DebtRecord {
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   draft: 'Nháp',
   pending: 'Chờ xác nhận',
-  confirmed: 'Đã xác nhận',
-  packing: 'Đang đóng gói',
+  processing: 'Đang xử lý',
   shipping: 'Đang giao',
   completed: 'Hoàn thành',
   cancelled: 'Đã hủy',

@@ -34,8 +34,17 @@ export interface TopCustomer {
 }
 
 export interface LowStockProduct {
-  id: string
-  name: string
-  sku: string
-  stock: number
+
+  id:string
+
+  name:string
+
+  sku:string
+
+  image:string | null
+
+  stock:number
+
+  sold:number
+
 }

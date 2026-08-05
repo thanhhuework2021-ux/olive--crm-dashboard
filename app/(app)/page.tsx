@@ -5,9 +5,13 @@ import {
   getTopCustomers,
   getRecentOrders,
   getLowStockProducts,
+  getOrderStatusSummary,
 } from '@/lib/services/dashboard.service'
 
 import { DateFilter } from '@/components/dashboard/date-filter'
+
+import { OrderStatusWidget } from "@/components/dashboard/order-status-widget"
+
 
 import {
   DollarSign,
@@ -40,7 +44,7 @@ import {
 
 import {
   RevenueAreaChart,
-  OrdersBarChart,
+
 } from '@/components/dashboard/dashboard-charts'
 
 import {
@@ -68,6 +72,16 @@ export default async function DashboardPage({
 
   const range = params.range ?? '30d'
 
+  const customFrom = params.from
+
+  const customTo = params.to
+
+  console.log({
+  range,
+  customFrom,
+  customTo,
+})
+
   console.log('Current Range:', range)
 
 const [
@@ -77,16 +91,48 @@ const [
   topCustomers,
   recentOrders,
   lowStock,
+  orderStatus,
 ] = await Promise.all([
-  getDashboardKPIs(range),
-  getRevenueChart(range),
-  getTopProducts(range),
-  getTopCustomers(range),
-  getRecentOrders(range),
+  getDashboardKPIs(
+    range,
+    customFrom,
+    customTo
+  ),
+
+  getRevenueChart(
+    range,
+    customFrom,
+    customTo
+  ),
+
+  getTopProducts(
+    range,
+    customFrom,
+    customTo
+  ),
+
+  getTopCustomers(
+    range,
+    customFrom,
+    customTo
+  ),
+
+  getRecentOrders(
+    range,
+    customFrom,
+    customTo
+  ),
+
   getLowStockProducts(),
+
+  getOrderStatusSummary(
+    range,
+    customFrom,
+    customTo
+  ),
 ])
 
-console.log('Revenue Data:', revenueData)
+
 
   return (
 
@@ -127,6 +173,7 @@ Làm mới
 </div>
 
 </div>
+
 
 {/* ================= KPI ================= */}
 
@@ -194,6 +241,12 @@ icon={Users}
 
 </StaggerGrid>
 
+<div className="mt-6">
+  <OrderStatusWidget
+    summary={orderStatus}
+  />
+</div>
+
 {/* ================= REVENUE ================= */}
 
 <div className="mt-8 grid grid-cols-12 gap-5 items-stretch">
@@ -242,37 +295,7 @@ icon={Users}
 
 {/* ================= ORDERS ================= */}
 
-<div className="mt-6">
 
-  <Card className="h-full rounded-2xl border shadow-sm flex flex-col">
-
-    <CardHeader className="pb-3">
-
-      <CardTitle>
-
-        Đơn hàng theo ngày
-
-      </CardTitle>
-
-      <CardDescription>
-
-        Biến động số lượng đơn hàng trong 30 ngày gần nhất
-
-      </CardDescription>
-
-    </CardHeader>
-
-    <CardContent className="flex-1 pt-0">
-
-      <OrdersBarChart
-        data={revenueData}
-      />
-
-    </CardContent>
-
-  </Card>
-
-</div>
 
 {/* ================= WIDGETS ================= */}
 

@@ -12,42 +12,113 @@ import type {
   LowStockProduct,
 } from "@/lib/types/dashboard"
 
-export async function getLowStockProducts(): Promise<LowStockProduct[]> {
+export async function getLowStockProducts(
+  range: string,
+  customFrom?: string,
+  customTo?: string,
+): Promise<LowStockProduct[]> {
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { from, to } = getDateRange(
+    range,
+    customFrom,
+    customTo
+  )
 
-    .from('products')
+  // Lấy sản phẩm
+  const { data: products } = await supabase
+    .from("products")
     .select(`
-      id,
-      name,
-      sku,
-      stock_quantity
+  id,
+  name,
+  stock_quantity,
+  image_url
+`)
+
+  // Lấy lịch sử bán
+  const { data: items } = await supabase
+    .from("order_items")
+    .select(`
+      product_id,
+      quantity,
+      orders!inner(
+        status,
+        created_at
+      )
     `)
-    .eq('status', 'active')
-    .lte('stock_quantity', 10)
-    .order('stock_quantity', {
-      ascending: true,
-    })
-    .limit(10)
+    .eq("orders.status", "completed")
+    .gte("orders.created_at", from.toISOString())
+    .lte("orders.created_at", to.toISOString())
 
-  if (error || !data) return []
+  if (!products || !items) return []
 
-  return data.map((item) => ({
-    id: item.id,
-    name: item.name,
-    sku: item.sku,
-    stock: Number(item.stock_quantity),
-  }))
+  const productMap = new Map(
+    products.map(p => [p.id, p])
+  )
+
+  const soldMap = new Map<string, number>()
+
+  items.forEach((item: any) => {
+
+    soldMap.set(
+      item.product_id,
+      (soldMap.get(item.product_id) ?? 0)
+      + Number(item.quantity)
+    )
+
+  })
+
+  const result: LowStockProduct[] = []
+
+  soldMap.forEach((sold, id) => {
+
+    const product = productMap.get(id)
+
+    if (!product) return
+
+    result.push({
+  id,
+  name: product.name,
+  image: product.image_url,
+  stock: Number(product.stock_quantity),
+  sold,
+})
+
+  })
+
+ const lowStock = result
+  .filter(p => p.stock <= 3)
+  .sort((a, b) => {
+
+    // Ưu tiên tồn kho thấp nhất
+    if (a.stock !== b.stock) {
+      return a.stock - b.stock
+    }
+
+    // Nếu tồn bằng nhau thì ưu tiên bán nhiều
+    return b.sold - a.sold
+
+  })
+  .slice(0, 5)
+
+console.table(lowStock)
+
+return lowStock
+
 }
 
-
 export async function getRecentOrders(
-  range: string
+  range: string,
+  customFrom?: string,
+  customTo?: string,
 ) {
 
-  const { from, to } = getDateRange(range)
+  const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
 
   const supabase = await createClient()
 
@@ -61,6 +132,7 @@ export async function getRecentOrders(
   status,
   created_at
 `)
+
 .gte('created_at', from.toISOString())
 .lte('created_at', to.toISOString())
 .order('created_at', { ascending: false })
@@ -72,12 +144,19 @@ export async function getRecentOrders(
 }
 
 export async function getRevenueChart(
-  range: string
-): Promise<RevenueChartItem[]> {
+  range: string,
+  customFrom?: string,
+  customTo?: string,
+)
+: Promise<RevenueChartItem[]> {
 
   const supabase = await createClient()
 
-  const { from, to } = getDateRange(range)
+  const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
 
   const { data, error } = await supabase
   .from('orders')
@@ -130,7 +209,9 @@ function percentChange(
 }
 
 export async function getDashboardKPIs(
-  range: string
+  range: string,
+  customFrom?: string,
+  customTo?: string,
 ): Promise<DashboardKPI> {
 
 
@@ -138,7 +219,11 @@ export async function getDashboardKPIs(
   const supabase = await createClient()
 
 
-const { from, to } = getDateRange(range)
+const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
 
 const diff = to.getTime() - from.getTime()
 
@@ -300,14 +385,20 @@ return {
 }
 
 export async function getTopProducts(
-  range: string
+  range: string,
+  customFrom?: string,
+  customTo?: string,
 ): Promise<TopProduct[]> {
 
   const supabase = await createClient()
 
   
 
-  const { from, to } = getDateRange(range)
+  const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
 
   const { data, error } = await supabase
     .from('order_items')
@@ -320,6 +411,7 @@ export async function getTopProducts(
       products (
         image_url
       ),
+
       orders!inner (
         status,
         created_at
@@ -360,12 +452,18 @@ export async function getTopProducts(
 }
 
 export async function getTopCustomers(
-  range: string
+  range: string,
+  customFrom?: string,
+  customTo?: string,
 ): Promise<TopCustomer[]> {
 
   const supabase = await createClient()
 
-  const { from, to } = getDateRange(range)
+  const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
 
   const { data, error } = await supabase
     .from('orders')
@@ -411,3 +509,128 @@ export async function getTopCustomers(
     .slice(0, 10)
 }
 
+export async function getOverview(
+  range: string
+) {
+
+  const supabase = await createClient()
+  const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
+
+
+ const { data, error } = await supabase
+  .from('orders')
+  .select(`
+    id,
+    customer_id,
+    total_amount,
+    status,
+    created_at
+  `)
+  .gte('created_at', from.toISOString())
+.lte('created_at', to.toISOString())
+
+  if (error || !data) {
+  return null
+}
+
+const revenue = data
+  .filter(order => order.status === 'completed')
+  .reduce(
+    (sum, order) => sum + Number(order.total_amount),
+    0
+  )
+
+  const totalOrders = data.length
+
+  const customers = new Set(
+  data.map(order => order.customer_id)
+).size
+
+const processing = data.filter(
+  order => order.status === 'processing'
+).length
+
+const shipping = data.filter(
+  order => order.status === 'shipping'
+).length
+
+const completed = data.filter(
+  order => order.status === 'completed'
+).length
+
+const cancelled = data.filter(
+  order => order.status === 'cancelled'
+).length
+
+console.log({
+  revenue,
+  totalOrders,
+  customers,
+  processing,
+  shipping,
+  completed,
+  cancelled,
+})
+
+return {
+  revenue,
+  totalOrders,
+  customers,
+  processing,
+  shipping,
+  completed,
+  cancelled,
+}
+
+}
+
+export async function getOrderStatusSummary(
+  range: string,
+  customFrom?: string,
+  customTo?: string,
+) {
+  const supabase = await createClient()
+
+  const { from, to } = getDateRange(
+  range,
+  customFrom,
+  customTo
+)
+
+console.log("=== KPI RANGE ===")
+console.log({
+  range,
+  customFrom,
+  customTo,
+  from: from.toISOString(),
+  to: to.toISOString(),
+})
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("status")
+    .gte("created_at", from.toISOString())
+    .lte("created_at", to.toISOString())
+
+  if (error || !data) {
+    return {
+      pending: 0,
+      processing: 0,
+      shipping: 0,
+      completed: 0,
+      cancelled: 0,
+    }
+  }
+
+  return {
+    pending: data.filter(o => o.status === "pending").length,
+    processing: data.filter(o => o.status === "processing").length,
+    shipping: data.filter(o => o.status === "shipping").length,
+    completed: data.filter(o => o.status === "completed").length,
+    cancelled: data.filter(o => o.status === "cancelled").length,
+  }
+}

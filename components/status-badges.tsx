@@ -13,8 +13,7 @@ import {
 const orderStatusStyles: Record<OrderStatus, string> = {
   draft: 'bg-muted text-muted-foreground border-transparent',
   pending: 'bg-warning/15 text-warning border-warning/30',
-  confirmed: 'bg-primary/15 text-primary border-primary/30',
-  packing: 'bg-chart-4/15 text-chart-4 border-chart-4/30',
+  processing: 'bg-chart-4/15 text-chart-4 border-chart-4/30',
   shipping: 'bg-chart-4/15 text-chart-4 border-chart-4/30',
   completed: 'bg-success/15 text-success border-success/30',
   cancelled: 'bg-destructive/15 text-destructive border-destructive/30',

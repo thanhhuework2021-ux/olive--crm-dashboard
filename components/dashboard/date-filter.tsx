@@ -12,6 +12,10 @@ import {
 
 import { CalendarDays } from 'lucide-react'
 
+import { useState } from 'react'
+
+import { DateRangeDialog } from '@/components/dashboard/date-range-dialog'
+
 interface Props {
   value: string
 }
@@ -20,17 +24,28 @@ export function DateFilter({
   value,
 }: Props) {
   const router = useRouter()
+
+  const [open, setOpen] = useState(false)
+
   const searchParams = useSearchParams()
 
-  function changeRange(range: string) {
-    const params = new URLSearchParams(searchParams)
+function changeRange(range: string) {
 
-    params.set('range', range)
+ if (range === 'custom') {
+  setOpen(true)
+  return
+}
 
-    router.push(`/?${params.toString()}`)
-  }
+  const params = new URLSearchParams(searchParams)
+
+  params.set('range', range)
+
+  router.push(`/?${params.toString()}`)
+}
 
   return (
+  <>
+
     <Select
       value={value}
       onValueChange={changeRange}
@@ -63,6 +78,14 @@ export function DateFilter({
         </SelectItem>
 
       </SelectContent>
+
     </Select>
-  )
+
+    <DateRangeDialog
+      open={open}
+      onOpenChange={setOpen}
+    />
+
+  </>
+)
 }

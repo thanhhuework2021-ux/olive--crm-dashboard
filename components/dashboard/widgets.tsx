@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from "next/image"
 import { ArrowRight, Crown, PackageX, TrendingUp } from 'lucide-react'
 import {
   Card,
@@ -75,7 +76,9 @@ export function RecentOrdersWidget({
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className="text-sm font-semibold">{formatVND(o.total_amount)}</span>
+
               <OrderStatusBadge status={o.status} />
+
             </div>
           </Link>
         ))}
@@ -159,48 +162,86 @@ export function LowStockWidget({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <PackageX className="size-4 text-warning" />
-          Tồn kho thấp
+          📦 Cần nhập hàng
         </CardTitle>
 
         <CardDescription>
-          Các sản phẩm cần nhập thêm
+          Ưu tiên nhập các sản phẩm bán tốt
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-2">
-        {products.map((p) => (
-          <div
-            key={p.id}
-            className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-accent"
-          >
-            <div>
-              <p className="font-medium">
-                {p.name}
-              </p>
+     <CardContent className="space-y-3">
 
-              <p className="text-xs text-muted-foreground">
-                {p.sku}
-              </p>
-            </div>
+  {products.map((p) => (
 
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">
-                {p.stock}
-              </span>
+    <div
+      key={p.id}
+      className="rounded-xl border p-3 transition hover:bg-accent/40"
+    >
 
-              <StockStatusBadge
-                status={
-                  p.stock === 0
-                    ? 'out'
-                    : p.stock <= 10
-                    ? 'low'
-                    : 'in_stock'
-                }
-              />
-            </div>
+      <div className="flex gap-3">
+
+        <Image
+          src={p.image || "/placeholder.png"}
+          alt={p.name}
+          width={56}
+          height={56}
+          className="rounded-lg border object-cover"
+        />
+
+        <div className="flex-1">
+
+          <p className="line-clamp-2 text-sm font-semibold">
+
+            {p.name}
+
+          </p>
+
+          <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
+
+            <span>
+
+              🔥 {p.sold} đơn
+
+            </span>
+
+            <span>
+
+              📦 {p.stock} còn
+
+            </span>
+
           </div>
-        ))}
-      </CardContent>
+
+        </div>
+
+        <div>
+
+          {p.stock === 0 ? (
+
+            <StockStatusBadge status="out" />
+
+          ) : (
+
+            <StockStatusBadge status="low" />
+
+          )}
+
+        </div>
+
+      </div>
+
+      <Progress
+        value={Math.min((p.stock / 5) * 100, 100)}
+        className="mt-3 h-2"
+      />
+
+    </div>
+
+  ))}
+
+</CardContent>
+
     </Card>
   )
 }
