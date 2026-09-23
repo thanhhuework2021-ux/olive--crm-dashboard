@@ -40,11 +40,11 @@ export default function InvoicePrint({
 
     <div className="mt-2 space-y-0.5 text-[10px] text-gray-600">
 
-      <div>KDC Trung Sơn, Bình Hưng, TP.HCM</div>
+      <div>Khu dân cư Khang Điền Bình Chánh, Đường Trịnh Quang Nghị, X. Phong Phú, H. Bình Chánh. Hồ Chí Minh</div>
 
       <div>Hotline: 0799 379 179</div>
 
-      <div>Email: olivelivingvn@gmail.com</div>
+      <div>Email: hello@olivelivingvn.com</div>
 
     </div>
 

@@ -2188,11 +2188,11 @@ hover:bg-cyan-600
         fontFamily: "Arial, Helvetica, sans-serif",
       }}
     >
-      <div>Địa chỉ: KDC Trung Sơn, Xã Bình Hưng, Hồ Chí Minh</div>
+      <div>Địa chỉ: Khu dân cư Khang Điền Bình Chánh, Đường Trịnh Quang Nghị, X. Phong Phú, H. Bình Chánh. Hồ Chí Minh</div>
 
       <div>Hotline: +84 79 937 9179</div>
 
-      <div>Email: olivelivingvn@gmail.com</div>
+      <div>Email: hello@olivelivingvn.com</div>
 
       <div>Website: oliveliving.vn</div>
     </div>
