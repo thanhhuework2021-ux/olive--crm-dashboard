@@ -20,6 +20,7 @@ import {
   X,
   Save,
   Check,
+  ChevronDown,
 } from 'lucide-react'
 import { PageShell, PageHeading } from '@/components/page-shell'
 import {
@@ -129,7 +130,23 @@ const [customerPhone, setCustomerPhone] =
 const [customerAddress, setCustomerAddress] =
   useState('')
 
-  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
+  
+  // =========================
+  // ADDRESS
+  // =========================
+  const [provinces, setProvinces] = useState<any[]>([])
+  const [districts, setDistricts] = useState<any[]>([])
+  const [wards, setWards] = useState<any[]>([])
+
+  const [selectedProvince, setSelectedProvince] = useState('')
+  const [provinceOpen, setProvinceOpen] = useState(false)
+  const [provinceSearch, setProvinceSearch] = useState('')
+  const [selectedDistrict, setSelectedDistrict] = useState('')
+  const [selectedWard, setSelectedWard] = useState('')
+  const [streetAddress, setStreetAddress] = useState('')
+  const [addressLoading, setAddressLoading] = useState(false)
+
+const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
 
 const [discountValue, setDiscountValue] = useState(0)
 
@@ -182,6 +199,113 @@ const [shippingFee, setShippingFee] =
   useState(35000)
 
   
+
+  // Load Vietnam address hierarchy
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        setAddressLoading(true)
+        const res = await fetch(
+          'https://provinces.open-api.vn/api/?depth=1'
+        )
+        if (!res.ok) throw new Error('Không thể tải tỉnh/thành phố')
+        setProvinces((await res.json()) || [])
+      } catch (error) {
+        console.error('LOAD PROVINCES ERROR', error)
+        toast.error('Không tải được danh sách tỉnh/thành phố')
+      } finally {
+        setAddressLoading(false)
+      }
+    }
+
+    loadProvinces()
+  }, [])
+
+  useEffect(() => {
+    if (!selectedProvince) {
+      setDistricts([])
+      setWards([])
+      setSelectedDistrict('')
+      setSelectedWard('')
+      return
+    }
+
+    const loadDistricts = async () => {
+      try {
+        setAddressLoading(true)
+        const res = await fetch(
+          `https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`
+        )
+        if (!res.ok) throw new Error('Không thể tải quận/huyện')
+        const data = await res.json()
+        setDistricts(data?.districts || [])
+        setWards([])
+        setSelectedDistrict('')
+        setSelectedWard('')
+      } catch (error) {
+        console.error('LOAD DISTRICTS ERROR', error)
+        toast.error('Không tải được danh sách quận/huyện')
+      } finally {
+        setAddressLoading(false)
+      }
+    }
+
+    loadDistricts()
+  }, [selectedProvince])
+
+  useEffect(() => {
+    if (!selectedDistrict) {
+      setWards([])
+      setSelectedWard('')
+      return
+    }
+
+    const loadWards = async () => {
+      try {
+        setAddressLoading(true)
+        const res = await fetch(
+          `https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`
+        )
+        if (!res.ok) throw new Error('Không thể tải phường/xã')
+        const data = await res.json()
+        setWards(data?.wards || [])
+        setSelectedWard('')
+      } catch (error) {
+        console.error('LOAD WARDS ERROR', error)
+        toast.error('Không tải được danh sách phường/xã')
+      } finally {
+        setAddressLoading(false)
+      }
+    }
+
+    loadWards()
+  }, [selectedDistrict])
+
+  useEffect(() => {
+    const provinceName =
+      provinces.find((item) => String(item.code) === String(selectedProvince))?.name || ''
+
+    const districtName =
+      districts.find((item) => String(item.code) === String(selectedDistrict))?.name || ''
+
+    const wardName =
+      wards.find((item) => String(item.code) === String(selectedWard))?.name || ''
+
+    setCustomerAddress(
+      [streetAddress.trim(), wardName, districtName, provinceName]
+        .filter(Boolean)
+        .join(', ')
+    )
+  }, [
+    streetAddress,
+    selectedProvince,
+    selectedDistrict,
+    selectedWard,
+    provinces,
+    districts,
+    wards,
+  ])
+
   const [orderNote, setOrderNote] = useState('')
   const [showAllProducts, setShowAllProducts] =
     useState(false)
@@ -223,6 +347,20 @@ const [shippingFee, setShippingFee] =
   )
 })
 
+
+const filteredProvinces = provinces.filter((province) =>
+  province.name
+    ?.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .includes(
+      provinceSearch
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+    )
+)
+
 useEffect(() => {
 
   loadData()
@@ -232,10 +370,7 @@ useEffect(() => {
   }
 
 }, [orderId])
-  const displayedProducts =
-    showAllProducts
-      ? filteredProducts
-      : filteredProducts.slice(0, 8)
+  const displayedProducts = filteredProducts
 
   const loadData = async () => {
     const { data: products } = await supabase
@@ -277,7 +412,8 @@ const loadOrder = async (id: string) => {
   setCustomerName(data.customers?.full_name || '')
   setCustomerPhone(data.customers?.phone || '')
   setCustomerAddress(data.customers?.address || '')
-  setCustomerCode(data.customers?.customer_display_code || '')
+    setStreetAddress(data.customers?.address || '')
+setCustomerCode(data.customers?.customer_display_code || '')
 
   //=========================
   // PAYMENT
@@ -467,6 +603,8 @@ const total =
   setCustomerAddress(
     data.address || ''
   )
+
+  setStreetAddress(data.address || '')
 }
 
 
@@ -750,15 +888,15 @@ product_name:
      <>
 
 
-    <div className="grid gap-6 lg:grid-cols-12">
+    <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">
 
           {/* LEFT PANEL */}
 
-<div className="lg:col-span-8 flex flex-col gap-4">
+<div className="flex min-w-0 flex-col gap-4 lg:col-span-8">
 
             <div >
 
-              <div className="mb-4 flex gap-3">
+              <div className="mb-4 flex flex-row flex-wrap gap-1.5 sm:flex-row sm:gap-2 sm:gap-3">
 
                 <div className="relative flex-1">
 
@@ -766,7 +904,7 @@ product_name:
     size={15}
     className="
       absolute
-      left-4
+      left-3
       top-1/2
       -translate-y-1/2
       text-slate-400
@@ -785,9 +923,12 @@ product_name:
       border
       border-slate-700
       bg-slate-900
-      py-3
+      min-h-11
+      py-2.5
       pl-12
       pr-4
+      text-base
+      sm:text-sm
     "
   />
 
@@ -801,7 +942,8 @@ product_name:
                     )
                   }
                   className="
-      w-64
+      w-full
+      sm:w-64
       rounded-md
       border
       border-slate-700
@@ -832,17 +974,17 @@ product_name:
 
               </div>
 
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between gap-2 sm:mb-4 sm:flex-row">
 
-                <span className="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-300">
+                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300 sm:px-3 sm:py-1 sm:text-sm">
                   {productsData.length} sản phẩm
                 </span>
 
-               <div className="flex gap-2">
+               <div className="flex max-w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
   <button
     onClick={() => setStockFilter('all')}
-    className={`rounded-full px-4 py-2 text-sm font-medium ${
+    className={`rounded-full px-2.5 py-1 text-[10px] font-medium sm:px-4 sm:py-2 sm:text-sm font-medium ${
       stockFilter === 'all'
         ? 'bg-cyan-500 text-white'
         : 'bg-slate-800 text-slate-300'
@@ -853,7 +995,7 @@ product_name:
 
   <button
     onClick={() => setStockFilter('active')}
-    className={`rounded-full px-4 py-2 text-sm font-medium ${
+    className={`rounded-full px-2.5 py-1 text-[10px] font-medium sm:px-4 sm:py-2 sm:text-sm font-medium ${
       stockFilter === 'active'
         ? 'bg-green-500 text-white'
         : 'bg-slate-800 text-slate-300'
@@ -864,7 +1006,7 @@ product_name:
 
   <button
     onClick={() => setStockFilter('low')}
-    className={`rounded-full px-4 py-2 text-sm font-medium ${
+    className={`rounded-full px-2.5 py-1 text-[10px] font-medium sm:px-4 sm:py-2 sm:text-sm font-medium ${
       stockFilter === 'low'
         ? 'bg-yellow-500 text-black'
         : 'bg-slate-800 text-slate-300'
@@ -875,7 +1017,7 @@ product_name:
 
   <button
     onClick={() => setStockFilter('out')}
-    className={`rounded-full px-4 py-2 text-sm font-medium ${
+    className={`rounded-full px-2.5 py-1 text-[10px] font-medium sm:px-4 sm:py-2 sm:text-sm font-medium ${
       stockFilter === 'out'
         ? 'bg-red-500 text-white'
         : 'bg-slate-800 text-slate-300'
@@ -894,8 +1036,12 @@ product_name:
        <div
   className="
     -mt-2
-    h-[420px]
+    h-[218px] min-h-0 max-h-[218px]
     overflow-y-auto
+    sm:h-[300px]
+    sm:max-h-[300px]
+    lg:h-[300px]
+    lg:max-h-[300px]
     rounded-md
     border
     border-slate-800
@@ -908,7 +1054,8 @@ product_name:
       sticky
       top-0
       z-10
-      grid
+      hidden
+      sm:grid
       grid-cols-12
       border-b
       border-slate-700
@@ -939,7 +1086,10 @@ product_name:
     </div>
   </div>
 
-   {displayedProducts.map((item) => (
+   {(showAllProducts
+      ? displayedProducts
+      : displayedProducts.slice(0, 4)
+    ).map((item) => (
 
   <div
   
@@ -948,15 +1098,21 @@ product_name:
     grid
     grid-cols-12
     items-center
+    gap-1
     border-b
     border-slate-800
-    px-4
-    py-3
+    px-2
+    py-1.5
+    sm:gap-0
+    sm:px-4
+    sm:items-center
+    sm:gap-0
+    sm:px-4
     hover:bg-slate-900/40
   "
 >
 
-   <div className="col-span-6 flex items-center gap-4">
+   <div className="col-span-7 flex min-w-0 items-center gap-2 sm:col-span-6 sm:gap-4">
 
   <img
   src={
@@ -964,43 +1120,48 @@ product_name:
     '/placeholder-product.png'
   }
   className="
-    h-16
-    w-16
+    h-8
+    w-8
+    shrink-0
     rounded-md
+    sm:h-14
+    sm:w-14
     object-cover
   "
 />
 
 <div>
 
-  <div className="font-semibold">
-    {item.name}
+  <div className="truncate text-[11px] font-semibold leading-4 sm:text-base">
+    {
+      getBaseProductName(item.name)
+    }
   </div>
 
-  <div className="mt-1">
+  <div className="mt-0.5">
 
   {Number(item.stock_quantity) > 5 && (
-    <span className="rounded-full bg-green-500/15 px-2 py-1 text-[10px] text-green-400">
+    <span className="rounded-full bg-green-500/15 px-1.5 py-0.5 text-[9px] text-green-400 sm:px-2 sm:py-1 sm:text-[10px]">
       Còn hàng
     </span>
   )}
 
   {Number(item.stock_quantity) > 0 &&
    Number(item.stock_quantity) <= 5 && (
-    <span className="rounded-full bg-yellow-500/15 px-2 py-1 text-[10px] text-yellow-400">
+    <span className="rounded-full bg-yellow-500/15 px-1.5 py-0.5 text-[9px] text-yellow-400 sm:px-2 sm:py-1 sm:text-[10px]">
       Sắp hết
     </span>
   )}
 
   {Number(item.stock_quantity) <= 0 && (
-    <span className="rounded-full bg-red-500/15 px-2 py-1 text-[10px] text-red-400">
+    <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-[9px] text-red-400 sm:px-2 sm:py-1 sm:text-[10px]">
       Hết hàng
     </span>
   )}
 
 </div>
 
-  <div className="text-sm text-slate-400">
+  <div className="truncate text-[8px] leading-3 text-slate-500 sm:text-sm sm:text-slate-400">
     {item.sku}
   </div>
 
@@ -1008,11 +1169,11 @@ product_name:
 
 </div>
 
-    <div className="col-span-3 text-center font-semibold text-cyan-400">
+    <div className="col-span-3 pl-0 text-right text-[10px] font-semibold text-cyan-400 sm:col-span-3 sm:text-center sm:text-[12px]">
       {Number(item.sale_price).toLocaleString('vi-VN')} đ
     </div>
 
-    <div className="col-span-2 flex justify-center">
+    <div className="hidden sm:col-span-2 sm:flex sm:items-center sm:justify-center">
 
   <span
     className="
@@ -1020,9 +1181,9 @@ product_name:
       bg-cyan-500/20
       border
       border-cyan-500/40
-      px-3
-      py-1
-      text-xs
+      px-2
+      py-0.5
+      text-[10px]
       font-bold
       text-cyan-300
     "
@@ -1032,15 +1193,16 @@ product_name:
 
 </div>
 
-<div className="col-span-1 flex justify-center">
+<div className="col-span-2 flex justify-end sm:col-span-1 sm:justify-center">
 
   <button
     onClick={() => addToCart(item)}
     className="
-      h-10
-      w-10
+      h-8
+      w-8
       rounded-md
       bg-cyan-500
+      text-sm
       text-white
       hover:bg-cyan-400
     "
@@ -1054,25 +1216,42 @@ product_name:
   </div>
 
 ))}
+</div>
 
+
+{/* MOBILE PRODUCT LIST TOGGLE */}
+<div className="flex h-7 items-center justify-center sm:hidden">
+  {displayedProducts.length > 4 && (
+    <button
+      type="button"
+      onClick={() => setShowAllProducts((prev) => !prev)}
+      className="px-3 py-0.5 text-[10px] font-medium text-cyan-400 hover:text-cyan-300"
+    >
+      {showAllProducts
+        ? 'Thu gọn sản phẩm ↑'
+        : `Xem thêm ${displayedProducts.length - 4} sản phẩm ↓`}
+    </button>
+  )}
 </div>
 
 {/* CART */}
 
 <div
  className="
-mt-3
-rounded-md
+mt-2
+rounded-xl
 border
 border-slate-800
 bg-slate-900/50
-p-3
+p-2
+sm:mt-3
+sm:p-3
 "
 >
 
-  <div className="mb-4 flex items-center justify-between">
+  <div className="mb-2 flex items-center justify-between gap-2 sm:mb-4 sm:flex-row">
 
-  <h2 className="text-xl font-bold">
+  <h2 className="text-sm font-bold sm:text-xl">
     Giỏ hàng (
     {cart.reduce(
       (s, item) => s + item.quantity,
@@ -1088,9 +1267,13 @@ p-3
         rounded-md
         border
         border-red-500/40
-        px-3
-        py-2
-        text-sm
+        px-2
+        py-1
+        whitespace-nowrap
+        text-[9px]
+        sm:px-3
+        sm:py-2
+        sm:text-sm
         text-red-400
         hover:bg-red-500/10
       "
@@ -1109,152 +1292,210 @@ p-3
 
   ) : (
 
-    <div className="space-y-3">
+    <div className="space-y-1 sm:space-y-3">
 
       {cart.map((item) => (
 
         <div
-  key={item.product.id}
-  className="
-    flex
-    items-center
-    justify-between
-    rounded-md
-    border
-    border-slate-800
-    p-3
-  "
->
+          key={item.product.id}
+          className="
+            flex
+            min-w-0
+            items-center
+            gap-1.5
+            rounded-lg
+            border
+            border-slate-800
+            px-1.5
+            py-1.5
+            sm:gap-3
+            sm:p-3
+          "
+        >
 
-  <div className="flex items-center gap-4">
+          {/* ẢNH */}
+          <img
+            src={
+              item.product.image_url ||
+              '/placeholder-product.png'
+            }
+            className="
+              h-8
+              w-8
+              shrink-0
+              rounded-md
+              object-cover
+              sm:h-16
+              sm:w-16
+            "
+            alt=""
+          />
 
-    <img
-      src={
-        item.product.image_url ||
-        '/placeholder-product.png'
-      }
-      className="
-        h-16
-        w-16
-        rounded-md
-        object-cover
-      "
-    />
+          {/* TÊN + SKU */}
+          <div className="min-w-0 flex-1">
+            <div className="
+              truncate
+              text-[10px]
+              font-semibold
+              leading-4
+              sm:text-base
+            ">
+              {getBaseProductName(item.product.name)}
+            </div>
 
-    <div>
+            <div className="
+              truncate
+              text-[8px]
+              leading-3
+              text-slate-500
+              sm:text-xs
+              sm:text-slate-400
+            ">
+              {item.product.sku}
+            </div>
+          </div>
 
-  <div className="font-semibold">
-    {item.product.name}
-  </div>
+          {/* MÀU */}
+          {item.product.color && (
+            <span className="
+              hidden
+              shrink-0
+              rounded-full
+              bg-cyan-500/15
+              px-1.5
+              py-0.5
+              text-[8px]
+              text-cyan-300
+              sm:inline-flex
+              sm:text-[9px]
+            ">
+              {item.product.color}
+            </span>
+          )}
 
-  <div className="text-xs text-slate-400">
-    {item.product.sku}
-  </div>
+          {/* GIÁ */}
+          <span className="
+            shrink-0
+            whitespace-nowrap
+            text-[9px]
+            font-bold
+            text-cyan-400
+            sm:text-base
+          ">
+            {item.price.toLocaleString('vi-VN')} đ
+          </span>
 
-  <div className="mt-1">
+          {/* SỐ LƯỢNG */}
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() =>
+                updateQty(item.product.id, -1)
+              }
+              aria-label="Giảm số lượng"
+              className="
+                flex
+                h-5
+                w-5
+                items-center
+                justify-center
+                rounded
+                bg-slate-700
+                text-[9px]
+                font-bold
+                leading-none
+                sm:h-8
+                sm:w-8
+                sm:rounded-md
+                sm:text-sm
+              "
+            >
+              −
+            </button>
 
-    {item.product.color && (
-      <span
-        className="
-          rounded-full
-          bg-cyan-500/15
-          px-2
-          py-1
-          text-[10px]
-          text-cyan-300
-        "
-      >
-        {item.product.color}
-      </span>
-    )}
+            <span className="
+              min-w-[12px]
+              text-center
+              text-[9px]
+              font-semibold
+              tabular-nums
+              sm:min-w-[24px]
+              sm:text-sm
+            ">
+              {item.quantity}
+            </span>
 
-  </div>
+            <button
+              type="button"
+              onClick={() =>
+                updateQty(item.product.id, 1)
+              }
+              aria-label="Tăng số lượng"
+              className="
+                flex
+                h-5
+                w-5
+                items-center
+                justify-center
+                rounded
+                bg-slate-700
+                text-[9px]
+                font-bold
+                leading-none
+                sm:h-8
+                sm:w-8
+                sm:rounded-md
+                sm:text-sm
+              "
+            >
+              +
+            </button>
+          </div>
 
-</div>
+          {/* XÓA */}
+          <button
+            type="button"
+            onClick={() =>
+              removeLine(item.product.id)
+            }
+            aria-label="Xóa sản phẩm"
+            className="
+              flex
+              h-5
+              w-5
+              shrink-0
+              items-center
+              justify-center
+              rounded
+              bg-red-500
+              text-[9px]
+              font-bold
+              leading-none
+              text-white
+              hover:bg-red-400
+              sm:h-8
+              sm:w-8
+              sm:rounded-md
+              sm:text-sm
+            "
+          >
+            ×
+          </button>
 
+        </div>
 
-  </div>
-
-  <div className="text-right">
-
-    <div className="text-cyan-400 font-bold">
-      {item.price.toLocaleString('vi-VN')} đ
-    </div>
-
-    <div className="text-xs text-slate-400">
-      Đơn giá
-    </div>
-
-  </div>
-
-  <div className="flex items-center gap-2">
-
-    <button
-      onClick={() =>
-        updateQty(item.product.id, -1)
-      }
-      className="rounded bg-slate-700 px-2"
-    >
-      -
-    </button>
-
-    <span>
-      {item.quantity}
-    </span>
-
-    <button
-      onClick={() =>
-        updateQty(item.product.id, 1)
-      }
-      className="rounded bg-slate-700 px-2"
-    >
-      +
-    </button>
-
-  </div>
-
-  <div className="w-32 text-right">
-
-    <div className="font-bold text-green-400">
-      {(item.price * item.quantity).toLocaleString('vi-VN')} đ
-    </div>
-
-    <div className="text-xs text-slate-400">
-      Thành tiền
-    </div>
-
-  </div>
-  
-
-  <button
-    onClick={() =>
-      removeLine(item.product.id)
-    }
-    className="
-      rounded
-      bg-red-500
-      px-3
-      py-1
-    "
-  >
-    X
-  </button>
-
-</div>
-
-        
       ))}
 
-      <div className="mt-2 border-t pt-2">
+      <div className="mt-1.5 border-t border-slate-700 pt-1.5 sm:mt-2 sm:pt-2">
 
-        <div className="mt-2 flex justify-between text-[17px] font-semibold">
+        <div className="flex justify-between text-sm font-semibold sm:mt-2 sm:text-[17px]">
           <span>Tạm tính</span>
           <span>
             {subtotal.toLocaleString('vi-VN')} đ
           </span>
         </div>
 
-        <div className="mt-2 flex justify-between text-1xl font-bold text-green-400">
+        <div className="mt-1 flex justify-between text-sm font-bold text-green-400 sm:mt-2">
           <span>Tổng</span>
           <span>
             {total.toLocaleString('vi-VN')} đ
@@ -1273,22 +1514,25 @@ p-3
 
 {/* RIGHT SIDEBAR */}
 
-<div className="lg:col-span-4">
+<div className="min-w-0 scroll-mt-4 border-t border-slate-800 pt-4 lg:col-span-4 lg:border-0 lg:pt-0">
 
   <div
     className="
-      rounded-lg
+      rounded-xl
       border
       border-slate-800
       bg-slate-900
-      p-5
+      p-2
+      sm:p-5
+      lg:sticky
+      lg:top-4
       shadow-lg
     "
     style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
   >
 
-  <div className="space-y-4">
-              <h2 className="mb-3 text-1xl font-bold">
+  <div className="space-y-2 sm:space-y-4">
+              <h2 className="mb-2 text-sm font-bold sm:mb-3 sm:text-xl">
   Thông Tin Khách hàng
 </h2>
 
@@ -1309,9 +1553,12 @@ p-3
       border
       border-cyan-700
       bg-slate-900
-      py-2
-      px-3
+      px-2.5
+      py-1.5
+      text-sm
       text-cyan-400
+      sm:px-3
+      sm:py-2
       font-semibold
       placeholder:text-cyan-500/70
     "
@@ -1345,7 +1592,7 @@ p-3
     size={15}
     className="
       absolute
-      left-4
+      left-3
       top-1/2
       -translate-y-1/2
       text-slate-400
@@ -1356,18 +1603,26 @@ p-3
     placeholder="Tên khách hàng"
     value={customerName}
     onChange={(e) =>
-      setCustomerName(e.target.value)
+      setCustomerName(e.target.value.toUpperCase())
     }
-    className="
-      mt-2
+    className="uppercase 
+      mt-1.5
       w-full
       rounded-md
       border
       border-slate-700
       bg-slate-900
-      py-3
-      pl-12
-      pr-4
+      min-h-9
+      py-1.5
+      pl-10
+      pr-3
+      text-sm
+      sm:mt-2
+      sm:min-h-11
+      sm:py-2.5
+      sm:pl-12
+      sm:pr-4
+      sm:text-sm
     "
   />
 
@@ -1393,66 +1648,179 @@ p-3
       setCustomerPhone(e.target.value)
     }
     className="
-      mt-2
+      mt-1.5
       w-full
       rounded-md
       border
       border-slate-700
       bg-slate-900
-      py-3
-      pl-12
-      pr-4
+      min-h-9
+      py-1.5
+      pl-10
+      pr-3
+      text-sm
+      sm:mt-2
+      sm:min-h-11
+      sm:py-2.5
+      sm:pl-12
+      sm:pr-4
+      sm:text-sm
     "
   />
 
 </div>
 
-              <div className="relative mb-5">
+              {/* ADDRESS */}
 
-  <MapPin
-    size={15}
-    className="
-      absolute
-      left-4
-      top-1/2
-      -translate-y-1/2
-      text-slate-400
-    "
-  />
+              <div className="mb-3 space-y-1.5 sm:mb-5 sm:space-y-2.5">
 
-  <input
-    placeholder="Địa chỉ"
-    value={customerAddress}
-    onChange={(e) =>
-      setCustomerAddress(e.target.value)
-    }
-    className="
-      mt-2
-      w-full
-      rounded-md
-      border
-      border-slate-700
-      bg-slate-900
-      py-3
-      pl-12
-      pr-4
-    "
-  />
+                <div className="flex items-center gap-2">
+                  <MapPin size={15} className="text-cyan-400" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Địa chỉ giao hàng
+                  </span>
 
+                  {addressLoading && (
+                    <span className="text-[10px] text-slate-500">
+                      Đang tải...
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+
+                  <div className="relative">
+  <button
+    type="button"
+    onClick={() => {
+      setProvinceOpen((open) => !open)
+      setProvinceSearch('')
+    }}
+    className="flex min-h-9 w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-left text-xs sm:min-h-11 sm:px-3 sm:py-3 sm:text-sm text-white outline-none transition hover:border-slate-600 focus:border-cyan-500 sm:min-h-11 sm:py-3"
+  >
+    <span className={selectedProvince ? 'text-white' : 'text-slate-400'}>
+      {provinces.find(
+        (province) =>
+          String(province.code) === String(selectedProvince)
+      )?.name || 'Tỉnh / Thành phố'}
+    </span>
+
+    <ChevronDown
+      size={16}
+      className={`shrink-0 text-slate-400 transition-transform ${
+        provinceOpen ? 'rotate-180' : ''
+      }`}
+    />
+  </button>
+
+  {provinceOpen && (
+    <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl">
+      <div className="border-b border-slate-800 p-2">
+        <div className="relative">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+          />
+          <input
+            autoFocus
+            value={provinceSearch}
+            onChange={(e) => setProvinceSearch(e.target.value)}
+            placeholder="Tìm nhanh tỉnh / thành phố..."
+            className="min-h-9 w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 pl-8 text-xs sm:min-h-10 sm:px-3 sm:pl-9 sm:text-sm text-white outline-none focus:border-cyan-500"
+          />
+        </div>
+      </div>
+
+      <div className="max-h-60 overflow-y-auto p-1">
+        {filteredProvinces.length === 0 ? (
+          <div className="px-3 py-4 text-center text-sm text-slate-500">
+            Không tìm thấy tỉnh / thành phố
+          </div>
+        ) : (
+          filteredProvinces.map((province) => (
+            <button
+              key={province.code}
+              type="button"
+              onClick={() => {
+                setSelectedProvince(String(province.code))
+                setProvinceOpen(false)
+                setProvinceSearch('')
+              }}
+              className={`w-full rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-slate-800 ${
+                String(province.code) === String(selectedProvince)
+                  ? 'bg-cyan-500/10 text-cyan-400'
+                  : 'text-slate-200'
+              }`}
+            >
+              {province.name}
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  )}
 </div>
+
+                  <select
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    disabled={!selectedProvince}
+                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-3 text-base text-white sm:text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-40 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
+                  >
+                    <option value="">Quận / Huyện</option>
+                    {districts.map((district) => (
+                      <option key={district.code} value={district.code}>
+                        {district.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={selectedWard}
+                    onChange={(e) => setSelectedWard(e.target.value)}
+                    disabled={!selectedDistrict}
+                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-3 text-base text-white sm:text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-40 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
+                  >
+                    <option value="">Phường / Xã</option>
+                    {wards.map((ward) => (
+                      <option key={ward.code} value={ward.code}>
+                        {ward.name}
+                      </option>
+                    ))}
+                  </select>
+
+                </div>
+
+                <input
+                  placeholder="Số nhà, tên đường / căn hộ"
+                  value={streetAddress}
+                  onChange={(e) => setStreetAddress(e.target.value.toUpperCase())}
+                  className="uppercase w-full rounded-md border border-slate-700 bg-slate-900 px-2.5 py-2 text-sm text-white sm:px-3 sm:py-3 sm:text-sm placeholder:text-slate-500 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
+                />
+
+                {customerAddress && (
+                  <div className="rounded-md border border-slate-800 bg-slate-950/70 px-2.5 py-1.5 text-[10px] leading-4 sm:px-3 sm:py-2 sm:text-[11px] sm:leading-5 text-slate-400">
+                    <span className="mr-1 font-medium text-slate-500">
+                      Địa chỉ đầy đủ:
+                    </span>
+                    {customerAddress}
+                  </div>
+                )}
+
+              </div>
 
 </div>
 
 {/* PAYMENT */}
 
 <div
-  className="rounded-md border border-slate-700 bg-slate-900 p-5"
+  className="rounded-xl border border-slate-700 bg-slate-900 p-2 sm:p-5"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   
-  <div className="space-y-2">
+  <div className="space-y-1.5 sm:space-y-2">
 
-    <h2 className="mb-2 text-lg font-semibold">
+    <h2 className="mb-1.5 text-sm font-semibold sm:mb-2 sm:text-lg">
   Thanh toán
 </h2>
 
@@ -1479,8 +1847,11 @@ p-3
         border
         border-slate-700
         bg-slate-900
-        px-3
-        py-2
+        px-2.5
+        py-1.5
+        text-sm
+        sm:px-3
+        sm:py-2
       "
     />
 
@@ -1492,13 +1863,17 @@ p-3
         )
       }
       className="
-        w-24
+        w-20
         rounded-md
         border
         border-slate-700
         bg-slate-900
-        px-3
-        py-2
+        px-2
+        py-1.5
+        text-sm
+        sm:w-24
+        sm:px-3
+        sm:py-2
       "
     >
       <option value="amount">VNĐ</option>
@@ -1521,7 +1896,7 @@ p-3
         onChange={(e) =>
           setShippingFee(Number(e.target.value))
         }
-        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
+        className="mt-0.5 w-full rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-sm sm:mt-1 sm:px-3 sm:py-2.5 sm:text-sm"
       />
     </div>
 
@@ -1537,7 +1912,7 @@ p-3
         onChange={(e) =>
           setPaymentMethod(e.target.value)
         }
-        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
+        className="mt-0.5 w-full rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-sm sm:mt-1 sm:px-3 sm:py-2.5 sm:text-sm"
       >
         <option value="cash">Tiền mặt</option>
         <option value="bank">Chuyển khoản</option>
@@ -1558,7 +1933,7 @@ p-3
         onChange={(e) =>
           setShippingProvider(e.target.value)
         }
-        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
+        className="mt-0.5 w-full rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-sm sm:mt-1 sm:px-3 sm:py-2.5 sm:text-sm"
       >
         <option value="GHN">GHN</option>
         <option value="GHTK">GHTK</option>
@@ -1579,13 +1954,13 @@ p-3
     onChange={(e) =>
       setPaidAmount(Number(e.target.value))
     }
-    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2"
+    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2.5 text-base sm:text-sm"
   />
 </div>
 
 {/* TOTAL */}
 
-<div className="mt-6 rounded-md border border-slate-800 bg-slate-900/40 p-4">
+<div className="mt-3 rounded-md border border-slate-800 bg-slate-900/40 p-2.5 sm:mt-6 sm:p-4">
   <div className="flex justify-between">
     <span>Tạm tính</span>
     <span>
@@ -1593,21 +1968,21 @@ p-3
     </span>
   </div>
 
-  <div className="mt-3 flex justify-between">
+  <div className="mt-1.5 flex justify-between text-sm sm:mt-3">
     <span>Giảm giá</span>
     <span>
       {discountAmount.toLocaleString('vi-VN')} đ
     </span>
   </div>
 
-  <div className="mt-3 flex justify-between">
+  <div className="mt-1.5 flex justify-between text-sm sm:mt-3">
     <span>Phí ship</span>
     <span>
       {shippingFee.toLocaleString('vi-VN')} đ
     </span>
   </div>
 
-  <div className="my-4 border-t border-slate-700" />
+  <div className="my-2 border-t border-slate-700 sm:my-4" />
 
   <div className="flex justify-between text-green-400 text-1xl font-bold">
     <span>Thành Tiền</span>
@@ -1626,12 +2001,15 @@ p-3
   <button
     onClick={() => setShowConfirm(true)}
     className="
-      mt-6
+      mt-3
       w-full
       rounded-md
       bg-cyan-500
-      py-4
-      text-lg
+      py-3
+      text-base
+      sm:mt-6
+      sm:py-4
+      sm:text-lg
       font-bold
       text-white
     "
@@ -1690,7 +2068,7 @@ p-3
                 </span>
               </p>
 
-              <div className="flex gap-2">
+              <div className="flex max-w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
                 <button
                   onClick={() =>
@@ -1752,36 +2130,44 @@ hover:bg-cyan-600
 
         {showPrint && (
 
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-black/70 p-2 sm:p-4"
+            style={{ overscrollBehavior: 'none' }}
+          >
 
     <div
   id="invoice-print"
   className="
     mx-auto
+    flex
+    min-h-0
+    h-auto
+    max-h-none
     w-full
     max-w-[210mm]
-    rounded-md
+    flex-1
+    flex-col
+    overflow-hidden
+    rounded-xl
     bg-white
     text-black
+    shadow-2xl
+
   "
   style={{
     padding: "12mm",
-    minHeight: "297mm",
+    minHeight: 0,
     boxSizing: "border-box",
     fontFamily: "Arial, Helvetica, sans-serif",
-    fontSize: "12px",
+    fontSize: "11px",
     lineHeight: "1.4",
   }}
 >
-  style={{
-    fontFamily: 'Arial, Helvetica, sans-serif',
-    fontSize: '12px',
-    lineHeight: '1.4',
-  }}
-
+  <div className="invoice-scroll min-h-0 flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+    <div className="invoice-content px-4 py-5 sm:p-[12mm]">
 {/* HEADER */}
 
-<div className="flex items-start justify-between border-b border-black pb-4">
+<div className="invoice-header flex items-start justify-between border-b border-black pb-4">
 
   {/* LEFT */}
 
@@ -1831,7 +2217,7 @@ hover:bg-cyan-600
 
 
 
-<div className="py-5 text-center">
+<div className="invoice-title py-5 text-center">
 
     <h2 className="text-[22px] font-bold">
         HÓA ĐƠN BÁN HÀNG
@@ -1844,7 +2230,7 @@ hover:bg-cyan-600
               {/* ORDER INFO */}
 
 <div
-  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[11px] leading-4"
+  className="invoice-order-info mt-3 border-y border-gray-300 py-2.5 text-[11px] leading-4"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
 
@@ -1866,20 +2252,20 @@ hover:bg-cyan-600
 {/* CUSTOMER INFO */}
 
 <div
-  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[11px] leading-4"
+  className="invoice-customer mt-3 border-b border-gray-300 pb-3 text-[11px] leading-4"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
   <div className="mb-1 font-bold border-b pb-1">
     THÔNG TIN KHÁCH HÀNG
   </div>
 
-  <div className="grid grid-cols-2 gap-x-6">
+  <div className="invoice-customer-grid grid grid-cols-2 gap-x-6">
 
    <div>
       <strong>Khách Hàng:</strong> {customerName}
     </div>
 
-    <div className="mt-1">
+    <div className="invoice-address mt-1">
   <strong>Địa chỉ:</strong> {customerAddress}
 </div>
 
@@ -1994,36 +2380,36 @@ hover:bg-cyan-600
 
 {/* TOTAL */}
 
-<div className="mt-3 ml-auto w-[280px] p-1 text-[11px]">
+<div className="invoice-payment-summary mt-3 ml-auto w-[280px] border-t border-b border-gray-300 py-2.5 text-[11px]">
 
-  <div className="mt-2 flex justify-between text-[11px] font-semibold">
+  <div className="invoice-payment-row flex justify-between text-[11px] font-semibold">
     <span>Tạm tính</span>
     <span>{subtotal.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 flex justify-between text-[11px] font-normal">
+  <div className="invoice-payment-row flex justify-between text-[11px] font-normal">
     <span>Giảm giá</span>
     <span>{discountAmount.toLocaleString('vi-VN')} đ</span>
   </div>
 
- <div className="mt-2 flex justify-between text-[11px] font-normal">
+ <div className="invoice-payment-row flex justify-between text-[11px] font-normal">
     <span>Phí ship</span>
     <span>{shippingFee.toLocaleString('vi-VN')} đ</span>
   </div>
 
- <div className="mt-2 flex justify-between text-[11px] font-normal">
+ <div className="invoice-payment-row flex justify-between text-[11px] font-normal">
     <span>Đã Thanh Toán</span>
     <span>{paidAmount.toLocaleString('vi-VN')} đ</span>
   </div>
 
-  <div className="mt-2 border-t border-black pt-2">
+  <div className="invoice-payment-total mt-2 border-t border-black pt-2">
 
-    <div className="mt-2 flex justify-between text-1xl font-bold text-green-600">
+    <div className="invoice-grand-total mt-2 flex justify-between text-1xl font-bold text-green-600">
       <span>THÀNH TIỀN</span>
       <span>{total.toLocaleString('vi-VN')} đ</span>
     </div>
 
-    <div className="mt-2 flex justify-between text-1xl font-bold text-blue-800">
+    <div className="invoice-balance mt-2 flex justify-between text-1xl font-bold text-blue-800">
       <span>CÒN LẠI</span>
       <span>
         {Math.max(total - paidAmount, 0).toLocaleString('vi-VN')} đ
@@ -2036,7 +2422,7 @@ hover:bg-cyan-600
 
           
           <div
-  className="mt-3 rounded-md border bg-gray-50 px-4 py-3 text-[11px] leading-4"
+  className="invoice-policy mt-3 border-b border-gray-300 pb-3 text-[11px] leading-4"
   style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
 >
 
@@ -2064,37 +2450,298 @@ hover:bg-cyan-600
     <li>Sản phẩm đã qua sử dụng hoặc bị tác động.</li>
   </ul>
 
-  <div className="mt-3 rounded border bg-blue-50 px-3 py-2 text-[11px] text-blue-700">
+  <div className="mt-3 border-l-2 border-gray-400 pl-3 text-[11px] text-gray-700">
     Liên hệ <strong>079 937 9179</strong> để được hỗ trợ về vận đơn và thông tin đơn hàng
   </div>
 
 </div>
 
-              {/* BUTTONS */}
-
-              <div className="no-print mt-6 flex gap-3">
-
-                <button
-                  onClick={() => window.print()}
-                  className="flex-1 rounded-md bg-green-500 py-3 font-bold text-white"
-                >
-                  🖨 In hóa đơn
-                </button>
-
-                <button
-                  onClick={() => setShowPrint(false)}
-                  className="flex-1 rounded-md bg-slate-300 py-3 font-bold"
-                >
-                  Đóng
-                </button>
-</div>
               </div>
             </div>
-            
-       
+
+            <div
+              className="no-print z-10 flex w-full shrink-0 gap-2 border-t border-gray-200 bg-white p-2 sm:p-3"
+              style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
+            >
+              <button
+                onClick={() => window.print()}
+                className="flex-1 rounded-lg bg-green-600 py-3 text-sm font-bold text-white sm:text-base"
+              >
+                🖨 In hóa đơn
+              </button>
+
+              <button
+                onClick={() => setShowPrint(false)}
+                className="flex-1 rounded-lg bg-gray-200 py-3 text-sm font-bold text-gray-900 sm:text-base"
+              >
+                Đóng
+              </button>
+            </div>
+
+            <style>{`
+              .invoice-scroll {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                overscroll-behavior: contain;
+              }
+              .invoice-scroll::-webkit-scrollbar { display: none; }
+
+              @media (max-width: 639px) {
+                /* MOBILE-FIRST CUSTOMER BILL */
+                #invoice-print {
+                  width: calc(100vw - 12px) !important;
+                  max-width: 430px !important;
+                  height: calc(100dvh - 12px) !important;
+                  max-height: calc(100dvh - 12px) !important;
+                  min-height: 0 !important;
+                  padding: 0 !important;
+                  border-radius: 14px !important;
+                  font-family: Arial, Helvetica, sans-serif !important;
+                  font-size: 10px !important;
+                  line-height: 1.3 !important;
+                }
+
+                #invoice-print .invoice-scroll {
+                  flex: 1 1 auto !important;
+                  min-height: 0 !important;
+                  overflow: hidden !important;
+                  height: auto !important;
+                }
+
+                #invoice-print .invoice-content {
+                  width: 100% !important;
+                  box-sizing: border-box !important;
+                  padding: 16px 16px 8px !important;
+                  font-family: Arial, Helvetica, sans-serif !important;
+                  font-size: 10px !important;
+                  line-height: 1.3 !important;
+                }
+
+                /* HEADER: slightly larger and better balanced */
+                #invoice-print .invoice-header {
+                  padding-bottom: 8px !important;
+                  align-items: flex-start !important;
+                }
+
+                #invoice-print .invoice-header h1 {
+                  font-size: 21px !important;
+                  line-height: 1 !important;
+                  letter-spacing: 2px !important;
+                  white-space: nowrap !important;
+                }
+
+                #invoice-print .invoice-header img {
+                  width: 68px !important;
+                  height: 68px !important;
+                }
+
+                #invoice-print .invoice-header .mt-3 {
+                  margin-top: 7px !important;
+                  font-size: 8px !important;
+                  line-height: 1.45 !important;
+                }
+
+                #invoice-print .invoice-header .ml-8 {
+                  margin-left: 10px !important;
+                }
+
+                /* TITLE */
+                #invoice-print .invoice-title {
+                  padding: 9px 0 8px !important;
+                }
+
+                #invoice-print .invoice-title h2 {
+                  font-size: 18px !important;
+                  line-height: 1.1 !important;
+                  letter-spacing: .2px !important;
+                }
+
+                /* ORDER / CUSTOMER cards */
+                #invoice-print .invoice-order-info,
+                #invoice-print .invoice-customer {
+                  margin-top: 7px !important;
+                  padding: 7px 0 !important;
+                  border-radius: 0 !important;
+                  background: transparent !important;
+                  font-size: 9px !important;
+                  line-height: 1.35 !important;
+                }
+
+                #invoice-print .invoice-customer .mb-1 {
+                  margin-bottom: 5px !important;
+                  padding-bottom: 4px !important;
+                  font-size: 9px !important;
+                  letter-spacing: .2px !important;
+                }
+
+                #invoice-print .invoice-customer-grid {
+                  grid-template-columns: 1fr 1fr !important;
+                  column-gap: 12px !important;
+                  row-gap: 3px !important;
+                }
+
+                /* Address gets full width so it never becomes a tall narrow column. */
+                #invoice-print .invoice-customer-grid .invoice-address {
+                  grid-column: 1 / -1 !important;
+                  order: 2 !important;
+                  margin-top: 2px !important;
+                }
+
+                /* PRODUCTS */
+                #invoice-print .invoice-content table {
+                  table-layout: fixed !important;
+                  width: 100% !important;
+                  margin-top: 9px !important;
+                  font-size: 8.5px !important;
+                }
+
+                #invoice-print .invoice-content th,
+                #invoice-print .invoice-content td {
+                  padding: 4px 2px !important;
+                  line-height: 1.2 !important;
+                  overflow-wrap: anywhere !important;
+                }
+
+                #invoice-print .invoice-content th:nth-child(3),
+                #invoice-print .invoice-content td:nth-child(3),
+                #invoice-print .invoice-content th:nth-child(5),
+                #invoice-print .invoice-content td:nth-child(5) {
+                  display: none !important;
+                }
+
+                #invoice-print .invoice-content th:nth-child(1),
+                #invoice-print .invoice-content td:nth-child(1) { width: 25% !important; }
+                #invoice-print .invoice-content th:nth-child(2),
+                #invoice-print .invoice-content td:nth-child(2) { width: 37% !important; }
+                #invoice-print .invoice-content th:nth-child(4),
+                #invoice-print .invoice-content td:nth-child(4) { width: 10% !important; text-align:center !important; }
+                #invoice-print .invoice-content th:nth-child(6),
+                #invoice-print .invoice-content td:nth-child(6) { width: 28% !important; }
+
+                /* PAYMENT SUMMARY — compact card, not a giant block */
+                #invoice-print .invoice-payment-summary {
+                  width: 58% !important;
+                  max-width: 250px !important;
+                  margin-top: 8px !important;
+                  padding: 7px 0 !important;
+                  border-radius: 0 !important;
+                  background: transparent !important;
+                  font-size: 9px !important;
+                }
+
+                #invoice-print .invoice-payment-row {
+                  margin-top: 0 !important;
+                  padding: 2px 0 !important;
+                  line-height: 1.25 !important;
+                }
+
+                #invoice-print .invoice-payment-total {
+                  margin-top: 5px !important;
+                  padding-top: 5px !important;
+                }
+
+                #invoice-print .invoice-grand-total,
+                #invoice-print .invoice-balance {
+                  margin-top: 2px !important;
+                  font-size: 11px !important;
+                  line-height: 1.2 !important;
+                }
+
+                /* POLICY — smaller and lighter so it doesn't dominate the bill */
+                #invoice-print .invoice-policy {
+                  margin-top: 9px !important;
+                  padding: 8px 0 7px !important;
+                  border-radius: 0 !important;
+                  background: transparent !important;
+                  font-size: 8.5px !important;
+                  line-height: 1.3 !important;
+                }
+
+                #invoice-print .invoice-policy > div:first-child {
+                  margin-bottom: 5px !important;
+                  padding-bottom: 4px !important;
+                  border-bottom: 0 !important;
+                  font-size: 10px !important;
+                  letter-spacing: .15px !important;
+                }
+
+                #invoice-print .invoice-policy p {
+                  margin-bottom: 2px !important;
+                }
+
+                #invoice-print .invoice-policy ul {
+                  margin: 2px 0 3px !important;
+                  padding-left: 15px !important;
+                  line-height: 1.3 !important;
+                }
+
+                #invoice-print .invoice-policy li {
+                  margin: 0 !important;
+                }
+
+                #invoice-print .invoice-policy .mt-3 {
+                  margin-top: 5px !important;
+                  padding: 4px 0 0 !important;
+                  font-size: 8px !important;
+                  line-height: 1.25 !important;
+                  border-left: 0 !important;
+                }
+
+                /* ACTION BAR — fixed footer inside modal, always visible */
+                #invoice-print + .no-print {
+                  flex: 0 0 auto !important;
+                  padding: 7px 8px max(7px, env(safe-area-inset-bottom)) !important;
+                  gap: 7px !important;
+                }
+
+                #invoice-print + .no-print button {
+                  min-height: 42px !important;
+                  padding: 8px 10px !important;
+                  border-radius: 9px !important;
+                  font-size: 12px !important;
+                }
+              }
+
+              @media print {
+                @page { size: A4 portrait; margin: 0; }
+                html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: visible !important; }
+                body * { visibility: hidden; }
+                #invoice-print, #invoice-print * { visibility: visible; }
+                #invoice-print {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 210mm !important;
+                  height: 297mm !important;
+                  max-width: none !important;
+                  max-height: none !important;
+                  min-height: 297mm !important;
+                  overflow: visible !important;
+                  display: block !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  border-radius: 0 !important;
+                  box-shadow: none !important;
+                }
+                #invoice-print .invoice-scroll { overflow: visible !important; height: auto !important; max-height: none !important; }
+                #invoice-print .invoice-content { min-height: 297mm !important; padding: 12mm !important; }
+                #invoice-print .no-print { display: none !important; }
+              }
+            `}</style>
+          </div>
+        </div>
+
         )}
 </div>
       </>
 
     )
   }
+function getBaseProductName(name: string = '') {
+  return name
+    .replace(/\s*[-–—]\s*(METAL|NON|RED|GREEN|BLUE|WHITE|BLACK|CHROME|GREY|GRAY|TEA|FRANCE).*$/i, '')
+    .replace(/\s+(METAL|NON|RED|GREEN|BLUE|WHITE|BLACK|CHROME|GREY|GRAY|TEA|FRANCE)$/i, '')
+    .trim()
+}
+
+
