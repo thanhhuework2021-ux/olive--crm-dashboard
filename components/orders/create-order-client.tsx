@@ -2188,7 +2188,7 @@ hover:bg-cyan-600
         fontFamily: "Arial, Helvetica, sans-serif",
       }}
     >
-      <div>Địa chỉ: Khu dân cư Khang Điền Bình Chánh, Đường Trịnh Quang Nghị, X. Phong Phú, H. Bình Chánh. Hồ Chí Minh</div>
+      <div>Địa chỉ: Khu dân cư Khang Điền Bình Chánh, Đường Trịnh Quang Nghị, X. Phong Phú, H. Bình Chánh. HCM</div>
 
       <div>Hotline: +84 79 937 9179</div>
 
